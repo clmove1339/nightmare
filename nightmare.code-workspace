@@ -1,0 +1,34 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "window.title": "nightmare",
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.formatOnPaste": true,
+        "Lua.workspace.library": [
+            "./typings"
+        ],
+        "Lua.runtime.path": [
+            "?.lua",
+            "?/init.lua"
+        ]
+    },
+    "extensions": {
+        "recommendations": [
+            "EditorConfig.EditorConfig",
+            "sumneko.lua",
+            "eamodio.gitlens",
+            "streetsidesoftware.code-spell-checker"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            // add luabundler task
+        ]
+    }
+}

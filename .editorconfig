@@ -1,0 +1,5 @@
+max_line_length = unset
+end_statement_with_semicolon = always
+indent_style = space
+indent_size = 4
+quote_style = single
