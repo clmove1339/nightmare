@@ -32,10 +32,7 @@ local ui = {}; do
 
         function c_tab:switch(label, default_value, is_group)
             local element = menu.add_check_box(label, self.location, default_value, is_group and string.format('%s%s group', self.location, label) or nil);
-
-            self.elements[#self.elements + 1] = {
-                element = element,
-            };
+            self.elements[#self.elements + 1] = element;
 
             return element;
         end;
@@ -90,6 +87,22 @@ local ui = {}; do
         end;
     end;
 
+    -- ---@class c_sub_tab: c_tab
+    -- local c_sub_tab = c_tab; do
+    --     ---@overload fun(self: c_sub_tab, name: string)
+    --     function c_sub_tab:new(name)
+    --         local instance = {
+    --             name = name,
+    --             location = string.format(self.location, name),
+    --             elements = {}
+    --         };
+
+    --         setmetatable(instance, { __index = c_sub_tab });
+
+    --         return instance;
+    --     end;
+    -- end;
+
     ---@param name string
     ---@return c_tab
     function ui.create(name)
@@ -107,6 +120,20 @@ local ui = {}; do
 
         return tab;
     end;
+
+    function ui.handle()
+        local selected = selector:get();
+        for i, tab in ipairs(tabs) do
+            local is_tab_visible = selected + 1 == i;
+            for _, element in pairs(tab.elements) do
+                element:set_visible(is_tab_visible);
+            end;
+        end;
+    end;
+
+    register_callback('paint', function()
+        xpcall(ui.handle, print);
+    end);
 end;
 
 return ui;
