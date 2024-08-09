@@ -8,20 +8,21 @@ local ui = {}; do
     ---@field name string
     ---@field elements table
     ---@field location string
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: boolean): check_box_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t
     ---@field button fun(self: c_tab, label: string, fn: function): button_t
     ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
-    ---@field combo fun(self: c_tab, label: string, items: string[], default_value: number): combo_box_t
+    ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number): combo_box_t
     ---@field keybind fun(self: c_tab, label: string, show_label?: boolean, key?: number, type?: number, display_in_list?: boolean): key_bind_t
     ---@field multicombo fun(self: c_tab, label: string, items: string[], default_value?: number[]): multi_combo_box_t
     ---@field slider_int fun(self: c_tab, label: string, min: number, max: number, default_value?: number): slider_int_t
     ---@field slider_float fun(self: c_tab, label: string, min: number, max: number, default_value?: number): slider_float_t
     local c_tab = {}; do
         ---@private
-        function c_tab:new(name)
+        function c_tab:new(name, location)
             local instance = {
                 name = name,
-                location = string.format(base_path, name),
+                location = location or base_path,
                 elements = {}
             };
 
@@ -31,10 +32,11 @@ local ui = {}; do
         end;
 
         function c_tab:switch(label, default_value, is_group)
-            local element = menu.add_check_box(label, self.location, default_value, is_group and string.format('%s%s group', self.location, label) or nil);
+            local context = is_group and string.format('%s%s group', self.location, label) or nil;
+            local element = menu.add_check_box(label .. (is_group and ' [  ]' or ''), self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
-            return element;
+            return is_group and c_tab:new(label, context) or element;
         end;
 
         function c_tab:button(label, fn)
@@ -86,22 +88,6 @@ local ui = {}; do
             return element;
         end;
     end;
-
-    -- ---@class c_sub_tab: c_tab
-    -- local c_sub_tab = c_tab; do
-    --     ---@overload fun(self: c_sub_tab, name: string)
-    --     function c_sub_tab:new(name)
-    --         local instance = {
-    --             name = name,
-    --             location = string.format(self.location, name),
-    --             elements = {}
-    --         };
-
-    --         setmetatable(instance, { __index = c_sub_tab });
-
-    --         return instance;
-    --     end;
-    -- end;
 
     ---@param name string
     ---@return c_tab

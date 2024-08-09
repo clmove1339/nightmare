@@ -48,5 +48,18 @@ local ui = require('ui');
 local main = ui.create('Main');
 local misc = ui.create('Misc');
 
-main:switch('КАКАЩКЕ', true, true);
-misc:switch('БУГАГАЩЬКЕ', true, true);
+local A = main:switch('A', true, true);
+local B = misc:switch('B', true, true);
+
+local slider_a = A:slider_int('Some slider', 0, 100, 0);
+local BA = B:switch('BA', false, true);
+
+BA:button('Поцеловать никсера', function()
+    print('Поцеловал никсера');
+end);
+
+slider_a:set(100);
+
+A:combo('Some combo', { '1', '2', '3' });
+
+require('utest');
