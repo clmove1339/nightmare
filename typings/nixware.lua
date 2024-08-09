@@ -366,6 +366,7 @@ function button_t:execute() end;
 ---@param label string
 ---@param location string
 ---@param callback fun()
+---@return button_t
 menu.add_button = function(label, location, callback) end;
 
 ---@param label string
