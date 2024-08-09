@@ -1,3 +1,9 @@
 {
-    "Lua.runtime.unicodeName": true
+    "Lua.runtime.unicodeName": true,
+    "Lua.diagnostics.globals": [
+        "КАКАЩЬКЕ",
+        "БУГАГАЩЬКЕ",
+        "ЧЛЕНОСОСЕМ",
+        "ГРАДУСВЖОПЕ"
+    ]
 }

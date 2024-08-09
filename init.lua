@@ -1,3 +1,4 @@
+---@param word any
 function KAKASHKE(word)
     _G[word] = {};
 
@@ -16,6 +17,8 @@ end;
 
 KAKASHKE('КАКАЩЬКЕ');
 KAKASHKE('БУГАГАЩЬКЕ');
+KAKASHKE('ЧЛЕНОСОСЕМ');
+KAKASHKE('ГРАДУСВЖОПЕ');
 
 if КАКАЩЬКЕ.К.А.К.А.Щ.Ь.К.Е.КАКАЩЬКЕ ~= КАКАЩЬКЕ then
     os.exit(1488, true);
@@ -23,6 +26,16 @@ if КАКАЩЬКЕ.К.А.К.А.Щ.Ь.К.Е.КАКАЩЬКЕ ~= КАКАЩЬКЕ
 end;
 
 if БУГАГАЩЬКЕ.Б.У.Г.А.Г.А.Щ.Ь.К.Е.БУГАГАЩЬКЕ ~= БУГАГАЩЬКЕ then
+    os.exit(1488, true);
+    return;
+end;
+
+if ЧЛЕНОСОСЕМ.Ч.Л.Е.Н.О.С.О.С.Е.М.ЧЛЕНОСОСЕМ ~= ЧЛЕНОСОСЕМ then
+    os.exit(1488, true);
+    return;
+end;
+
+if ГРАДУСВЖОПЕ.Г.Р.А.Д.У.С.В.Ж.О.П.Е.ГРАДУСВЖОПЕ ~= ГРАДУСВЖОПЕ then
     os.exit(1488, true);
     return;
 end;
@@ -48,18 +61,12 @@ local ui = require('ui');
 local main = ui.create('Main');
 local misc = ui.create('Misc');
 
-local A = main:switch('A', true, true);
-local B = misc:switch('B', true, true);
+local last_switch = main:switch('0', true, true);
 
-local slider_a = A:slider_int('Some slider', 0, 100, 0);
-local BA = B:switch('BA', false, true);
+for i = 1, 500 do
+    last_switch = last_switch:switch(tostring(i), true, true);
+end;
 
-BA:button('Поцеловать никсера', function()
-    print('Поцеловал никсера');
-end);
+print(last_switch.location);
 
-slider_a:set(100);
-
-A:combo('Some combo', { '1', '2', '3' });
-
-require('utest');
+-- require('utest');
