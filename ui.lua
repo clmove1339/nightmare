@@ -107,6 +107,15 @@ local ui = {}; do
         return tab;
     end;
 
+    function ui.delete(name)
+        for i, tab in ipairs(tabs) do
+            if tab.name == name then
+                table.remove(tabs, i);
+                break;
+            end;
+        end;
+    end;
+
     function ui.handle()
         local selected = selector:get();
         for i, tab in ipairs(tabs) do
