@@ -1,3 +1,4 @@
+-- Я СПИДОЗНАЯ СКОВОРОДКА
 require('global');
 
 local test = {}; do
