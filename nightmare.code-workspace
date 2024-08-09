@@ -9,13 +9,14 @@
         "editor.formatOnSave": true,
         "editor.formatOnType": true,
         "editor.formatOnPaste": true,
+        "Lua.runtime.version": "LuaJIT",
         "Lua.workspace.library": [
             "./typings"
         ],
         "Lua.runtime.path": [
             "?.lua",
             "?/init.lua"
-        ]
+        ],
     },
     "extensions": {
         "recommendations": [
