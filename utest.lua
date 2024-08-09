@@ -26,14 +26,15 @@ local test = {}; do
             return;
         end;
 
-        local result = { total = 0, passed = 0 };
+        local result = { total = 0, passed = 0, time = 0 };
 
         for name, fn in pairs(list[workspace]) do
-            result.total = result.total + 1;
             local start_time = os.clock();
             local status = pcall(fn);
             local end_time = os.clock();
             local delta = (end_time - start_time) * 1000;
+            result.total = result.total + 1;
+            result.time = result.time + delta;
 
             if status == true then
                 printf('%s test was passed in %.1f ms', name, delta);
@@ -58,7 +59,7 @@ local test = {}; do
                     goto continue;
                 end;
 
-                printf('%s out of %s tests of the "%s" workspace were successful', result.passed, result.total, workspace);
+                printf('%s out of %s tests of the "%s" workspace were successful ( total execution time: %.2f )\n', result.passed, result.total, workspace, result.time);
                 ::continue::
             end;
         end;
@@ -156,6 +157,88 @@ test.new('ui.color', function()
 
     ui.delete('A');
 
+    return true;
+end);
+
+test.new('ui.combo', function()
+    local ui = require('ui');
+
+    local A = ui.create('A');
+    local combo1 = A:combo('Combo # 1', { '1', '2', '3' });
+    local combo2 = A:combo('Combo # 2', { '1', '2', '3' }, 2);
+
+    assert(
+        type(combo1:get()) == 'number' and
+        type(combo2:get()) == 'number'
+    );
+
+    combo1:set(2);
+    combo2:set(1);
+
+    combo1:set_items({ '1' });
+    combo2:set_items({ '5' });
+
+    assert(
+        type(combo1:get()) == 'number' and
+        type(combo2:get()) == 'number'
+    );
+
+    combo1:set(0);
+    combo2:set(0);
+
+    assert(
+        type(combo1:get()) == 'number' and
+        type(combo2:get()) == 'number'
+    );
+
+    ui.delete('A');
+
+    return true;
+end);
+
+test.new('ui.keybind', function()
+    local ui = require('ui');
+    local A = ui.create('A');
+
+    local keybind1 = A:keybind('Keybind # 1');
+    local keybind2 = A:keybind('Keybind # 2', true, 1, 1, true);
+    local keybind3 = A:keybind('Keybind # 2', false, 0, 0, false);
+
+    assert(
+        type(keybind1:get_display_in_list()) == 'boolean' and
+        type(keybind1:get_key()) == 'number' and
+        type(keybind1:get_type()) == 'number' and
+        type(keybind1:is_active()) == 'boolean' and
+
+        type(keybind2:get_display_in_list()) == 'boolean' and
+        type(keybind2:get_key()) == 'number' and
+        type(keybind2:get_type()) == 'number' and
+        type(keybind2:is_active()) == 'boolean' and
+
+        type(keybind3:get_display_in_list()) == 'boolean' and
+        type(keybind3:get_key()) == 'number' and
+        type(keybind3:get_type()) == 'number' and
+        type(keybind3:is_active()) == 'boolean'
+    );
+
+    keybind1:set_display_in_list(true);
+    keybind1:set_display_in_list(false);
+
+    keybind2:set_display_in_list(true);
+    keybind2:set_display_in_list(false);
+
+    keybind3:set_display_in_list(true);
+    keybind3:set_display_in_list(false);
+
+    keybind1:set_key(2);
+    keybind2:set_key(2);
+    keybind3:set_key(2);
+
+    keybind1:set_type(0);
+    keybind2:set_type(0);
+    keybind3:set_type(0);
+
+    ui.delete('A');
     return true;
 end);
 
