@@ -1,7 +1,8 @@
 local ui = {}; do
     ---@type c_tab[]
     local tabs = {};
-    local selector = menu.add_combo_box('Select tab', 'Movement/Anti aim', {});
+    local base_path = 'Movement/Anti aim';
+    local selector = menu.add_combo_box('Select tab', base_path, {});
 
     ---@class c_tab
     ---@field name string
@@ -20,7 +21,7 @@ local ui = {}; do
         function c_tab:new(name)
             local instance = {
                 name = name,
-                location = string.format('Movement/Anti aim', name),
+                location = string.format(base_path, name),
                 elements = {}
             };
 
