@@ -1,4 +1,5 @@
 NATIVE_PRINT = NATIVE_PRINT or print;
+NotImplemented = 'NotImplemented';
 
 function print(...)
     local args = { ... };

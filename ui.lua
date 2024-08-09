@@ -32,7 +32,7 @@ local ui = {}; do
         end;
 
         function c_tab:switch(label, default_value, is_group)
-            local context = is_group and string.format('%s%s group', self.location, label) or nil;
+            local context = is_group and string.format('%s %s group', self.location, label) or nil;
             local element = menu.add_check_box(label .. (is_group and ' [  ]' or ''), self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
