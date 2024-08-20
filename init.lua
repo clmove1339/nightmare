@@ -23,18 +23,19 @@ local antiaim = {}; do
     local handle = ui.create('Anti-Aim');
 
     antiaim.builder = {}; do
-        local states_names = { 'Default', 'Run', 'Walk', 'Crouch', 'In Air' };
+        local states_names = { 'Default', 'Stand', 'Run', 'Walk', 'Crouch', 'In Air' };
         local information = {};
-        local group = handle:switch('Builder', false, true);
-
-        for _, state in ipairs(states_names) do
-            information[state] = {};
-        end;
-
+        local group, builder = handle:switch('Builder', false, true);
         local states = group:combo('State', states_names, 0);
 
-        states:depend({
+        for i, state in ipairs(states_names) do
+            information[state] = {
+                yaw_offset = group:slider_int(state .. ' - Yaw offset', -180, 180, 0)
+            };
 
-        });
+            for _, element in pairs(information[state]) do
+                element:depend({ { states, i - 1 } });
+            end;
+        end;
     end;
 end;
