@@ -3,12 +3,44 @@ local ui = {}; do
     local tabs = {};
     local base_path = 'Movement/Anti aim';
     local selector = menu.add_combo_box('Select tab', base_path, {});
+    ---@type function[]
+    local depend_list = {};
+
+    ---@param depends table
+    local function depend(element, depends)
+        depend_list[#depend_list + 1] = function()
+            local visible = true;
+
+            for i, dependant in ipairs(depends) do
+                if (type(dependant) == 'table') then
+                    visible = dependant[1]:get() == dependant[2];
+                else
+                    visible = dependant;
+                end;
+
+                if not visible then
+                    break;
+                end;
+            end;
+
+            element:set_visible(visible);
+        end;
+    end;
+
+    check_box_t.depend = depend;
+    combo_box_t.depend = depend;
+    multi_combo_box_t.depend = depend;
+    slider_float_t.depend = depend;
+    slider_int_t.depend = depend;
+    key_bind_t.depend = depend;
+    button_t.depend = depend;
+    color_picker_t.depend = depend;
 
     ---@class c_tab
     ---@field name string
     ---@field elements table
     ---@field location string
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab, check_box_t
     ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t
     ---@field button fun(self: c_tab, label: string, fn: function): button_t
     ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
@@ -36,7 +68,11 @@ local ui = {}; do
             local element = menu.add_check_box(label .. (is_group and ' [  ]' or ''), self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
-            return is_group and c_tab:new(label, context) or element;
+            if is_group then
+                return c_tab:new(label, context), element;
+            end;
+
+            return element;
         end;
 
         function c_tab:button(label, fn)
@@ -123,6 +159,10 @@ local ui = {}; do
             for _, element in pairs(tab.elements) do
                 element:set_visible(is_tab_visible);
             end;
+        end;
+
+        for _, fn in ipairs(depend_list) do
+            fn();
         end;
     end;
 
