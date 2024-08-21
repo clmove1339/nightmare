@@ -243,4 +243,20 @@ test.new('ui.keybind', function()
     return true;
 end);
 
+test.new('ui.switch', function()
+    local ui = require('ui');
+    local A = ui.create('A');
+
+    local class, switch = A:switch('Switch', true, true);
+
+    assert(
+        type(switch) == 'userdata' and
+        type(class) == 'table'
+    );
+
+    ui.delete('A');
+
+    return true;
+end);
+
 test.main();
