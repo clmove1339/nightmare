@@ -11,7 +11,7 @@ local ui = {}; do
         depend_list[#depend_list + 1] = function()
             local visible = true;
 
-            for i, dependant in ipairs(depends) do
+            for _, dependant in ipairs(depends) do
                 if (type(dependant) == 'table') then
                     visible = dependant[1]:get() == dependant[2];
                 else
@@ -143,6 +143,17 @@ local ui = {}; do
         return tab;
     end;
 
+    function ui.hide(value)
+        for _, element in pairs(nixware['Movement']['Anti aim']) do
+            element:set_visible(not value);
+        end;
+        for _, element in pairs(nixware['Movement']['Movement']) do
+            element:set_visible(not value);
+        end;
+
+        nixware['Movement']['Fakelag'].limit:set_visible(not value);
+    end;
+
     function ui.delete(name)
         for i, tab in ipairs(tabs) do
             if tab.name == name then
@@ -166,8 +177,14 @@ local ui = {}; do
         end;
     end;
 
+    ui.hide(true);
+
     register_callback('paint', function()
         xpcall(ui.handle, print);
+    end);
+
+    register_callback('unload', function()
+        ui.hide(false);
     end);
 end;
 
