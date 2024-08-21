@@ -1,6 +1,11 @@
 ---@meta _
 ---@diagnostic disable: missing-return
 
+---@class menu_item
+---@field set_visible fun(self: menu_item, value: boolean): nil
+---@field get fun(self: menu_item): any
+---@field set fun(self: menu_item, value: any): nil
+
 ---@class vec2_t
 ---@field x number
 ---@field y number
@@ -218,7 +223,7 @@ render.circle_fade_3d = function(pos, radius, color_in, color_out, normal) end;
 
 menu = {};
 
----@class check_box_t
+---@class check_box_t: menu_item
 check_box_t = {};
 
 ---@return boolean
@@ -234,7 +239,7 @@ function check_box_t:set(value) end;
 ---@return check_box_t
 menu.add_check_box = function(label, location, default_value, context_location) end;
 
----@class slider_int_t
+---@class slider_int_t: menu_item
 slider_int_t = {};
 
 ---@return number
@@ -251,7 +256,7 @@ function slider_int_t:set(value) end;
 ---@return slider_int_t
 menu.add_slider_int = function(label, location, min, max, default_value) end;
 
----@class slider_float_t
+---@class slider_float_t: menu_item
 slider_float_t = {};
 
 ---@return number
@@ -268,7 +273,7 @@ function slider_float_t:set(value) end;
 ---@return slider_float_t
 menu.add_slider_float = function(label, location, min, max, default_value) end;
 
----@class combo_box_t
+---@class combo_box_t: menu_item
 combo_box_t = {};
 
 ---@return number
@@ -287,7 +292,7 @@ function combo_box_t:set_items(items) end;
 ---@return combo_box_t
 menu.add_combo_box = function(label, location, items, default_value) end;
 
----@class multi_combo_box_t
+---@class multi_combo_box_t: menu_item
 multi_combo_box_t = {};
 
 ---@param index number
@@ -308,7 +313,7 @@ function multi_combo_box_t:set_items(items) end;
 ---@return multi_combo_box_t
 menu.add_multi_combo_box = function(label, location, items, default_value) end;
 
----@class key_bind_t
+---@class key_bind_t: menu_item
 key_bind_t = {};
 
 ---@return boolean
@@ -341,7 +346,7 @@ function key_bind_t:set_display_in_list(display_in_list) end;
 ---@return key_bind_t
 menu.add_key_bind = function(label, location, show_label, key, type, display_in_list) end;
 
----@class color_picker_t
+---@class color_picker_t: menu_item
 color_picker_t = {};
 
 ---@return color_t
@@ -358,7 +363,7 @@ function color_picker_t:set(value) end;
 ---@return color_picker_t
 menu.add_color_picker = function(label, location, show_label, show_alpha, default_value) end;
 
----@class button_t
+---@class button_t: menu_item
 button_t = {};
 
 function button_t:execute() end;

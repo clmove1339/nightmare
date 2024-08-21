@@ -14,10 +14,11 @@ do
     end;
 end;
 
-require('global');
+require 'nixware';
+require 'global';
 
-local ui = require('ui');
-local memory = require('memory');
+local ui = require 'ui';
+local memory = require 'memory';
 
 local antiaim = {}; do
     ---@private
@@ -39,4 +40,16 @@ local antiaim = {}; do
             end;
         end;
     end;
+end;
+
+local rage = {}; do
+    ---@private
+    local handle = ui.create('Rage');
+
+    handle:combo('Resolver Type', {
+        'Off',
+        'Default',
+        'Extended',
+        'SISKI MASISKI'
+    });
 end;
