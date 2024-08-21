@@ -42,6 +42,7 @@ local ui = {}; do
     ---@field location string
     ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab, check_box_t
     ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: nil): check_box_t
     ---@field button fun(self: c_tab, label: string, fn: function): button_t
     ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
     ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number): combo_box_t
