@@ -17,6 +17,7 @@ end;
 require('global');
 
 local ui = require('ui');
+local memory = require('memory');
 
 local antiaim = {}; do
     ---@private
