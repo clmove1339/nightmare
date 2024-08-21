@@ -17,6 +17,9 @@
             "?.lua",
             "?/init.lua"
         ],
+        "Lua.diagnostics.disable": [
+            "undefined-global"
+        ],
     },
     "extensions": {
         "recommendations": [
