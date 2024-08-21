@@ -17,13 +17,15 @@
             "?.lua",
             "?/init.lua"
         ],
+        "Lua.diagnostics.disable": [
+            "undefined-global"
+        ],
     },
     "extensions": {
         "recommendations": [
             "EditorConfig.EditorConfig",
             "sumneko.lua",
             "eamodio.gitlens",
-            "streetsidesoftware.code-spell-checker"
         ]
     },
     "tasks": {
