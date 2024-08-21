@@ -1,3 +1,5 @@
+-- ДА ЕБУЧИЕ ПЕНИСЫ день 1
+
 do
     local import = require;
 
