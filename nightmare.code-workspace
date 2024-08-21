@@ -26,7 +26,6 @@
             "EditorConfig.EditorConfig",
             "sumneko.lua",
             "eamodio.gitlens",
-            "streetsidesoftware.code-spell-checker"
         ]
     },
     "tasks": {
