@@ -26,6 +26,22 @@ function printf(...)
     print(string.format(...));
 end;
 
+---Prints the contents of a table, including nested tables, in a readable format.
+---@param list table The table to print.
+---@param indent string|nil Used for formatting nested tables (internal use).
+function print_t(list, indent)
+    indent = indent or '';
+
+    for key, value in pairs(list) do
+        if type(value) == 'table' then
+            print(indent .. tostring(key) .. ':');
+            print_t(value, indent .. '    ');
+        else
+            print(indent .. tostring(key) .. ': ' .. tostring(value));
+        end;
+    end;
+end;
+
 ---Clamp a number between mn and mx
 ---@param x number
 ---@param mn number
@@ -97,24 +113,4 @@ function benchmark(fn, iterations, accuracy, ...)
     end;
 
     return avg / accuracy;
-end;
-
----Swap two elements in a table
----@param list table
----@param a any
----@param b any
-table.swap = function(list, a, b)
-    list[a], list[b] = list[b], list[a];
-end;
-
----Move an element from one position to another within a table
----@param list table
----@param from number
----@param to number
----@diagnostic disable-next-line: duplicate-set-field
-table.move = function(list, from, to)
-    local value = list[from];
-
-    table.remove(list, from);
-    table.insert(list, to, value);
 end;
