@@ -84,11 +84,17 @@ local memory = {}; do
         return class:new(fns);
     end;
 
+    ---@generic T
+    ---@param self any
+    ---@param module string
+    ---@param name string
+    ---@param fns T
+    ---@return class_t|T
     function memory:interface(module, name, fns)
         local ptr = self:create_interface(module, name);
         assert(ptr, 'failed to create interface');
 
-        return class:new(fns)(ptr);
+        return self:class(fns)(ptr);
     end;
 
     function memory:get_vfunc(arg, ...)
