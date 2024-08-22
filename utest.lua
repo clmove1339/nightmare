@@ -30,7 +30,7 @@ local test = {}; do
 
         for name, fn in pairs(list[workspace]) do
             local start_time = os.clock();
-            local status = pcall(fn);
+            local status, msg = pcall(fn);
             local end_time = os.clock();
             local delta = (end_time - start_time) * 1000;
             result.total = result.total + 1;
@@ -41,6 +41,7 @@ local test = {}; do
                 result.passed = result.passed + 1;
             else
                 printf('%s test was failed in %.1f ms', name, delta);
+                printf('reason: %s\n', msg);
             end;
         end;
 
@@ -86,6 +87,24 @@ test.new('ui.create', function()
         type(A.switch) == 'function'
     );
 
+    local class, switch = A:switch('Switch group #1', true, true);
+
+    assert(
+        type(A.elements) == 'table' and
+        type(A.location) == 'string' and
+        type(A.name) == 'string' and
+        type(A:button('Button #1', function() end)) == 'userdata' and
+        type(A:color('Color picker #1', color_t.new(0, 0, 0, 0), true, true)) == 'userdata' and
+        type(A:combo('Combo #1', { '1', '2' }, 0)) == 'userdata' and
+        type(A:keybind('Keybind #1', true, 1, 0, false)) == 'userdata' and
+        type(A:multicombo('Multicombo #1', { '1', '2', '3' }, { 0 })) == 'userdata' and
+        type(A:slider_float('Slider float #1', 0, 180, 0)) == 'userdata' and
+        type(A:slider_int('Slider int #1', 0, 180, 0)) == 'userdata' and
+        type(A:switch('Switch #1', false)) == 'userdata' and
+        type(class) == 'table' and
+        type(switch) == 'userdata'
+    );
+
     ui.delete('A');
 
     return true;
@@ -98,6 +117,9 @@ test.new('ui.button', function()
     local button = A:button('Button', function() end);
 
     button:execute();
+
+    button:set_visible(true);
+    button:set_visible(false);
 
     ui.delete('A');
 
@@ -153,6 +175,21 @@ test.new('ui.color', function()
         type(value_5.a) == 'number'
     );
 
+    color1:set_visible(true);
+    color1:set_visible(false);
+
+    color2:set_visible(true);
+    color2:set_visible(false);
+
+    color3:set_visible(true);
+    color3:set_visible(false);
+
+    color4:set_visible(true);
+    color4:set_visible(false);
+
+    color5:set_visible(true);
+    color5:set_visible(false);
+
     ui.delete('A');
 
     return true;
@@ -188,6 +225,54 @@ test.new('ui.combo', function()
         type(combo1:get()) == 'number' and
         type(combo2:get()) == 'number'
     );
+
+    combo1:set_visible(true);
+    combo1:set_visible(false);
+
+    combo2:set_visible(true);
+    combo2:set_visible(false);
+
+    ui.delete('A');
+
+    return true;
+end);
+
+test.new('ui.multicombo', function()
+    local ui = require('ui');
+    local A = ui.create('A');
+
+    local multicombo1 = A:multicombo('Multicombo # 1', { '1', '2', '3' });
+    local multicombo2 = A:multicombo('Multicombo # 2', { '1', '2', '3' }, { 0, 1 });
+
+    assert(
+        multicombo1:get(0) == false and
+        multicombo2:get(0) == true
+    );
+
+    multicombo1:set(0, true);
+    multicombo2:set(0, true);
+
+    multicombo1:set_items({ '1', '7' });
+    multicombo2:set_items({ '5', '7' });
+
+    assert(
+        multicombo1:get(0) == true and
+        multicombo2:get(0) == true
+    );
+
+    multicombo1:set(0, false);
+    multicombo2:set(0, false);
+
+    assert(
+        multicombo1:get(1) == false and
+        multicombo2:get(1) == true
+    );
+
+    multicombo1:set_visible(true);
+    multicombo1:set_visible(false);
+
+    multicombo2:set_visible(true);
+    multicombo2:set_visible(false);
 
     ui.delete('A');
 
@@ -236,7 +321,54 @@ test.new('ui.keybind', function()
     keybind2:set_type(0);
     keybind3:set_type(0);
 
+    keybind1:set_visible(true);
+    keybind1:set_visible(false);
+    keybind2:set_visible(true);
+    keybind2:set_visible(false);
+    keybind3:set_visible(true);
+    keybind3:set_visible(false);
+
     ui.delete('A');
+    return true;
+end);
+
+test.new('ui.slider_float', function()
+    local ui = require('ui');
+    local A = ui.create('A');
+
+    local slider_float = A:slider_float('Slider float #1', 0, 100, 50);
+
+    assert(
+        type(slider_float.set) == 'function' and
+        type(slider_float:get()) == 'number' and
+        slider_float:get() == 50
+    );
+
+    slider_float:set_visible(true);
+    slider_float:set_visible(false);
+
+    ui.delete('A');
+
+    return true;
+end);
+
+test.new('ui.slider_int', function()
+    local ui = require('ui');
+    local A = ui.create('A');
+
+    local slider_int = A:slider_int('Slider int #1', 0, 100, 50);
+
+    assert(
+        type(slider_int.set) == 'function' and
+        type(slider_int:get()) == 'number' and
+        slider_int:get() == 50
+    );
+
+    slider_int:set_visible(true);
+    slider_int:set_visible(false);
+
+    ui.delete('A');
+
     return true;
 end);
 
@@ -245,10 +377,32 @@ test.new('ui.switch', function()
     local A = ui.create('A');
 
     local class, switch = A:switch('Switch', true, true);
+    ---@cast class -check_box_t
+
+    switch:set_visible(true);
+    switch:set_visible(false);
 
     assert(
         type(switch) == 'userdata' and
         type(class) == 'table'
+    );
+
+    local a, b = class:switch('Switch group #2', true, true);
+
+    assert(
+        type(class.elements) == 'table' and
+        type(class.location) == 'string' and
+        type(class.name) == 'string' and
+        type(class:button('Button #1', function() end)) == 'userdata' and
+        type(class:color('Color picker #1', color_t.new(0, 0, 0, 0), true, true)) == 'userdata' and
+        type(class:combo('Combo #1', { '1', '2' }, 0)) == 'userdata' and
+        type(class:keybind('Keybind #1', true, 1, 0, false)) == 'userdata' and
+        type(class:multicombo('Multicombo #1', { '1', '2', '3' }, { 0 })) == 'userdata' and
+        type(class:slider_float('Slider float #1', 0, 180, 0)) == 'userdata' and
+        type(class:slider_int('Slider int #1', 0, 180, 0)) == 'userdata' and
+        type(class:switch('Switch #2', false)) == 'userdata' and
+        type(a) == 'table' and
+        type(b) == 'userdata'
     );
 
     ui.delete('A');
