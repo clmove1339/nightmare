@@ -59,9 +59,12 @@ local INetChannelInfo = memory:class({
 });
 
 --- @class IEngineClient : class_t
+--- @field GetLocalPlayer fun(self: IEngineClient): number
 --- @field GetNetChannel fun(self: IEngineClient): ffi.cdata*
 local IEngineClient = memory:interface('engine', 'VEngineClient014', {
+    GetLocalPlayer = { 12, 'int(__thiscall*)(void*)' },
     GetNetChannel = { 78, 'void*(__thiscall*)(void*)' },
+
 });
 
 ---@class net_channel_info_t
@@ -248,6 +251,10 @@ local engine_client = {}; do
         end;
 
         return setmetatable({ this = INetChannelInfo(net_channel_info) }, net_channel_info_t);
+    end;
+
+    function engine_client:get_local_player()
+        return IEngineClient:GetLocalPlayer();
     end;
 end;
 

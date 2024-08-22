@@ -2,9 +2,10 @@
 ---@diagnostic disable: missing-return
 
 ---@class menu_item
----@field set_visible fun(self: menu_item, value: boolean): nil
+---@field set_visible fun(self: menu_item, value: boolean)
+---@field is_visible fun(self: menu_item): boolean
 ---@field get fun(self: menu_item): any
----@field set fun(self: menu_item, value: any): nil
+---@field set fun(self: menu_item, value: any)
 
 ---@class vec2_t
 ---@field x number

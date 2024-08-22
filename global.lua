@@ -7,6 +7,7 @@ ffi = require 'ffi'; do
     ffi.cdef [[
         void* GetModuleHandleA(const char*);
         void* GetProcAddress(void*, const char*);
+        int VirtualProtect(void*, unsigned long, unsigned long, unsigned long*);
     ]];
 end;
 

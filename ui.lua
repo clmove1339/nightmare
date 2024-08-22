@@ -27,7 +27,7 @@ local ui = {}; do
                 end;
             end;
 
-            element:set_visible(visible);
+            element:set_visible(element:is_visible() and visible);
         end;
     end;
 
