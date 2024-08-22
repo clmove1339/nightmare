@@ -1,18 +1,14 @@
--- ДА ЕБУЧИЕ ПЕНИСЫ день 1
-
 do
     local import = require;
 
     require = function(modname)
         local success, module = pcall(import, modname);
 
-        if success then
-            return module;
+        if not success then
+            module = import(string.format('nightmare.%s', modname));
         end;
 
-        modname = string.format('nightmare.%s', modname);
-
-        return import(modname);
+        return module;
     end;
 end;
 
@@ -115,11 +111,10 @@ local antiaim = {}; do
             };
 
             for element_name, element in pairs(state_info) do
-                element:depend({ { enable, true }, { state_selector, index - 1 }, { sub_handle, 1 } });
+                local is_default_state = state == 'Default';
+                local is_override_checkbox = element_name == 'override';
 
-                if element_name == 'override' and state == 'Default' then
-                    element:depend({ { enable, true }, { state_selector, index - 1 }, false });
-                end;
+                element:depend({ { enable, true }, { state_selector, index - 1 }, { sub_handle, 1 }, not (is_default_state and is_override_checkbox), (is_default_state or is_override_checkbox) and true or { state_info.override, true } });
             end;
 
             information[state] = state_info;

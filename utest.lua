@@ -1,4 +1,3 @@
--- Я СПИДОЗНАЯ СКОВОРОДКА
 require('global');
 
 local test = {}; do
@@ -96,9 +95,7 @@ test.new('ui.button', function()
     local ui = require('ui');
 
     local A = ui.create('A');
-    local button = A:button('Button', function()
-        -- Аллах акбар
-    end);
+    local button = A:button('Button', function() end);
 
     button:execute();
 
