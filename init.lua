@@ -7,22 +7,22 @@ do
         local success, module = pcall(import, modname);
 
         if not success then
-            module = import(string.format('nightmare.%s', modname));
+            module = import(string.format('nightmare.%s', modname):gsub('%.', '/'));
         end;
 
         return module;
     end;
 end;
 
-require 'enums';
-require 'global';
+require 'libs.enums';
+require 'libs.global';
 
-local memory = require 'memory';
-local ui = require 'ui';
-local utils = require 'utils';
-local engine_client = require 'engine_client';
-local vmt = require 'vmt';
-local inspect = require 'inspect';
+local memory = require 'libs.memory';
+local ui = require 'libs.ui';
+local utils = require 'libs.utils';
+local engine_client = require 'libs.engine_client';
+local vmt = require 'libs.vmt';
+local inspect = require 'libs.inspect';
 
 local aimbot = {}; do
     ---@private
@@ -211,7 +211,7 @@ local skinchanger = {}; do
 
     local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
-    local weapon_data = require 'weapon_skins';
+    local weapon_data = require 'libs.weapon_skins';
     local weapon_names = {
         'weapon_ak47',
         'weapon_aug',

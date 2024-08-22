@@ -1,4 +1,4 @@
-local memory = require 'memory';
+local memory = require 'libs.memory';
 
 local utils = {}; do
     ---@private

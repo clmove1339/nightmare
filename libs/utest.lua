@@ -1,4 +1,4 @@
-require('global');
+require('libs.global');
 
 local test = {}; do
     ---@type table<string, table<string, function>>
@@ -79,7 +79,7 @@ end;
 test.set_workspace('ui');
 
 test.new('ui.create', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     assert(
@@ -120,7 +120,7 @@ test.new('ui.create', function()
 end);
 
 test.new('ui.button', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
 
     local A = ui.create('A');
     local button = A:button('Button', function() end);
@@ -136,7 +136,7 @@ test.new('ui.button', function()
 end);
 
 test.new('ui.color', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
 
     local A = ui.create('A');
     local color1 = A:color('Color # 1');
@@ -205,7 +205,7 @@ test.new('ui.color', function()
 end);
 
 test.new('ui.combo', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
 
     local A = ui.create('A');
     local combo1 = A:combo('Combo # 1', { '1', '2', '3' });
@@ -247,7 +247,7 @@ test.new('ui.combo', function()
 end);
 
 test.new('ui.multicombo', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     local multicombo1 = A:multicombo('Multicombo # 1', { '1', '2', '3' });
@@ -289,7 +289,7 @@ test.new('ui.multicombo', function()
 end);
 
 test.new('ui.keybind', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     local keybind1 = A:keybind('Keybind # 1');
@@ -342,7 +342,7 @@ test.new('ui.keybind', function()
 end);
 
 test.new('ui.slider_float', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     local slider_float = A:slider_float('Slider float #1', 0, 100, 50);
@@ -362,7 +362,7 @@ test.new('ui.slider_float', function()
 end);
 
 test.new('ui.slider_int', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     local slider_int = A:slider_int('Slider int #1', 0, 100, 50);
@@ -382,7 +382,7 @@ test.new('ui.slider_int', function()
 end);
 
 test.new('ui.switch', function()
-    local ui = require('ui');
+    local ui = require('libs.ui');
     local A = ui.create('A');
 
     local class, switch = A:switch('Switch', true, true);
