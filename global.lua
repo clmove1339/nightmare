@@ -1,6 +1,12 @@
 NATIVE_PRINT = NATIVE_PRINT or print;
 NotImplemented = 'NotImplemented';
 
+ffi = require 'ffi'; do
+    ffi.cdef [[
+        // add cdef declares here
+    ]];
+end;
+
 function print(...)
     local args = { ... };
     for i = 1, #args do

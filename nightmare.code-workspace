@@ -18,7 +18,8 @@
             "?/init.lua"
         ],
         "Lua.diagnostics.disable": [
-            "undefined-global"
+            "undefined-global",
+            "lowercase-global"
         ],
         "Lua.workspace.ignoreDir": [
             ".vscode",

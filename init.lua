@@ -176,8 +176,8 @@ local visualization = {}; do
     local handle = ui.create('Visualization');
 
     -- и тут мне тоже абсолютно поебать, сами подравите как надо ( либо я как проснусь )
-    local camera_distance = handle:slider_int('3rd person distance', 30, 180, cvars.cam_idealdist:get_int());
     local old_value = cvars.cam_idealdist:get_int();
+    local camera_distance = handle:slider_int('3rd person distance', 30, 180, old_value);
 
     register_callback('paint', function()
         if camera_distance:get() ~= old_value then
