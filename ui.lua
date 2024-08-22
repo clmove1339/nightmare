@@ -109,7 +109,7 @@ local ui = {}; do
         end;
 
         function c_tab:multicombo(label, items, default_value)
-            local element = menu.add_multi_combo_box(label, self.location, items, default_value);
+            local element = menu.add_multi_combo_box(label, self.location, items, default_value or {});
             self.elements[#self.elements + 1] = element;
 
             return element;

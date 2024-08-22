@@ -40,7 +40,7 @@ local antiaim = {}; do
     sub_handle:depend({ { enable, true } });
 
     antiaim.general = {}; do
-        local features = handle:multicombo('Features', { 'Anti-backstab', 'Manual anti-aim' }, {});
+        local features = handle:multicombo('Features', { 'Anti-backstab', 'Manual anti-aim' });
 
         local manual = {
             left = handle:keybind('Manual left'),
