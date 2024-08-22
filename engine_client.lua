@@ -1,6 +1,6 @@
 local memory = require 'memory';
 
----@class INetChannelInfo
+---@class INetChannelInfo : class_t
 ---@field GetName fun(self: INetChannelInfo): string;
 ---@field GetAddress fun(self: INetChannelInfo): string;
 ---@field GetTime fun(self: INetChannelInfo): number;
@@ -58,6 +58,8 @@ local INetChannelInfo = memory:class({
     GetTimeoutSeconds = { 26, 'float(__thiscall*)(void*)' }
 });
 
+--- @class IEngineClient : class_t
+--- @field GetNetChannel fun(self: IEngineClient): ffi.cdata*
 local IEngineClient = memory:interface('engine', 'VEngineClient014', {
     GetNetChannel = { 78, 'void*(__thiscall*)(void*)' },
 });

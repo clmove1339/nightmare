@@ -80,6 +80,9 @@ local memory = {}; do
         return nil;
     end;
 
+    ---@generic T
+    ---@param fns T
+    ---@return class_t|T
     function memory:class(fns)
         return class:new(fns);
     end;
