@@ -39,7 +39,7 @@ end;
 local antiaim = {}; do
     ---@private
     local handle = ui.create('Anti-aimbot');
-    local enable = handle:switch('Enabled', false);
+    local enable = handle:switch('Enabled'); -- Ебаный сын никсера блять
     local sub_handle = handle:combo('Anti-aimbot part:', { 'General', 'Settings' });
 
     sub_handle:depend({ { enable, true } });
@@ -61,12 +61,13 @@ local antiaim = {}; do
         manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
-    local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching' };
+    local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
     local netvars = {
         m_fFlags = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
         m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
     }; -- мне абсолютно поебать что оно возможно не там где надо находится
 
+    ---@param cmd user_cmd_t
     function antiaim:get_statement(cmd)
         local me = entitylist.get_local_player();
 
@@ -83,6 +84,11 @@ local antiaim = {}; do
         local in_crouch = duck_amount > 0 or is_fake_duck;
         local in_air = bit.band(cmd.buttons, bit.lshift(1, 1)) == bit.lshift(1, 1) or bit.band(flags, bit.lshift(1, 0)) == 0;
         local in_speed = bit.band(cmd.buttons, bit.lshift(1, 17)) == bit.lshift(1, 17);
+        local in_use = bit.band(cmd.buttons, 32) == 32;
+
+        if in_use then
+            return states[9];
+        end;
 
         if in_air then
             return states[in_crouch and 8 or 7];
@@ -133,6 +139,9 @@ local antiaim = {}; do
 
         local base_path = 'Movement/Anti aim';
 
+        -- я для чего nixware таблицу делал пидор?
+        -- чтобы ты опять взял и пукнул в код жиденько?
+        -- неоЖИДанно и СВОевременно
         local elements = {
             pitch = menu.find_combo_box('Pitch', base_path),
             base_yaw = menu.find_combo_box('Base yaw', base_path),
@@ -145,11 +154,16 @@ local antiaim = {}; do
 
         local native_enabled = nixware['Movement']['Anti aim'].enabled:get();
 
+        ---@param cmd user_cmd_t
         local function setup(cmd)
             nixware['Movement']['Anti aim'].enabled:set(enable:get());
 
-            local statement = information[antiaim:get_statement(cmd)].override:get() and antiaim:get_statement(cmd) or 'Default';
-            local settings = information[statement];
+            local state = antiaim:get_statement(cmd);
+            state = information[state].override:get() and state or 'Default';
+
+            local settings = information[state];
+
+            -- Тут кароче пастроем бальшо функцый для лэгит аа
 
             for name, element in pairs(settings) do
                 if name == 'override' then

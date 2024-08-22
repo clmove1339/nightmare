@@ -69,6 +69,7 @@ local ui = {}; do
         end;
 
         function c_tab:switch(label, default_value, is_group)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local context = is_group and string.format('%s %s group', self.location, label) or nil;
             local element = menu.add_check_box(label .. (is_group and ' [  ]' or ''), self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
@@ -81,6 +82,7 @@ local ui = {}; do
         end;
 
         function c_tab:button(label, fn)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_button(label, self.location, fn or function() end);
             self.elements[#self.elements + 1] = element;
 
@@ -88,6 +90,7 @@ local ui = {}; do
         end;
 
         function c_tab:color(label, default_value, show_label, show_alpha)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_color_picker(label, self.location, show_label, show_alpha, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -95,6 +98,7 @@ local ui = {}; do
         end;
 
         function c_tab:combo(label, items, default_value)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_combo_box(label, self.location, items, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -102,6 +106,7 @@ local ui = {}; do
         end;
 
         function c_tab:keybind(label, show_label, key, type, display_in_list)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_key_bind(label, self.location, show_label, key, type, display_in_list);
             self.elements[#self.elements + 1] = element;
 
@@ -109,6 +114,7 @@ local ui = {}; do
         end;
 
         function c_tab:multicombo(label, items, default_value)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_multi_combo_box(label, self.location, items, default_value or {});
             self.elements[#self.elements + 1] = element;
 
@@ -116,6 +122,7 @@ local ui = {}; do
         end;
 
         function c_tab:slider_int(label, min, max, default_value)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_slider_int(label, self.location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -123,6 +130,7 @@ local ui = {}; do
         end;
 
         function c_tab:slider_float(label, min, max, default_value)
+            label = string.format('%s##%s/%s', label, self.location, label);
             local element = menu.add_slider_float(label, self.location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 
