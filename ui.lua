@@ -13,7 +13,11 @@ local ui = {}; do
 
             for _, dependant in ipairs(depends) do
                 if (type(dependant) == 'table') then
-                    visible = dependant[1]:get() == dependant[2];
+                    if dependant[1].__type.name == 'base_multi_combo_box_t' then
+                        visible = dependant[1]:get(dependant[2]);
+                    else
+                        visible = dependant[1]:get() == dependant[2];
+                    end;
                 else
                     visible = dependant;
                 end;
