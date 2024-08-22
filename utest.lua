@@ -1,7 +1,7 @@
 require('global');
 
 local test = {}; do
-    ---@type table< string, table<string, function> >
+    ---@type table<string, table<string, function>>
     list = {};
     workspace = nil;
 
@@ -9,6 +9,8 @@ local test = {}; do
         workspace = name;
     end;
 
+    ---@param name string
+    ---@param fn function
     test.new = function(name, fn)
         if not workspace then
             return;
@@ -21,6 +23,7 @@ local test = {}; do
         list[workspace][name] = fn;
     end;
 
+    ---@param workspace string
     test.done = function(workspace)
         if not workspace then
             return;
@@ -48,11 +51,17 @@ local test = {}; do
         return result;
     end;
 
+    ---@param workspace? string
     test.main = function(workspace)
         engine.execute_client_cmd('clear');
 
         if workspace then
-            test.done(workspace);
+            local result = test.done(workspace);
+            if not result then
+                return;
+            end;
+
+            printf('%s out of %s tests of the "%s" workspace were successful ( total execution time: %.2f )\n', result.passed, result.total, workspace, result.time);
         else
             for workspace, _ in pairs(list) do
                 local result = test.done(workspace);

@@ -1,6 +1,8 @@
 do
     local import = require;
 
+    ---@param modname string
+    ---@return any
     require = function(modname)
         local success, module = pcall(import, modname);
 

@@ -20,6 +20,12 @@ local utils = {}; do
         return vec2_t.new(x[0], y[0]);
     end;
 
+    ---@param sound string
+    ---@param volume? number
+    ---@param pitch? number
+    ---@param flags? number
+    ---@param delay? number
+    ---@return unknown
     function utils:play_sound(sound, volume, pitch, flags, delay)
         volume = volume or 1;
         pitch = pitch or 100;
@@ -29,6 +35,9 @@ local utils = {}; do
         return IEngineSound:EmitAmbientSound(sound, 1., pitch, flags, delay);
     end;
 
+    ---@param guid number
+    ---@param force_sync? boolean
+    ---@return unknown
     function utils:stop_sound(guid, force_sync)
         return IEngineSound:StopSoundByGuid(guid, force_sync or false);
     end;
