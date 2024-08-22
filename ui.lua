@@ -152,11 +152,13 @@ local ui = {}; do
         for _, element in pairs(nixware['Movement']['Anti aim']) do
             element:set_visible(not value);
         end;
-        for _, element in pairs(nixware['Movement']['Movement']) do
-            element:set_visible(not value);
-        end;
+        --[[
+            for _, element in pairs(nixware['Movement']['Movement']) do
+                element:set_visible(not value);
+            end;
 
-        nixware['Movement']['Fakelag'].limit:set_visible(not value);
+            nixware['Movement']['Fakelag'].limit:set_visible(not value);
+        --]]
     end;
 
     function ui.delete(name)
