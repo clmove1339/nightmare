@@ -9,6 +9,7 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
 
+
 require 'libs.enums';
 require 'libs.global';
 
@@ -301,6 +302,11 @@ local skinchanger = {}; do
             skin = handle:combo('Skin selector##' .. name, weapon_data[name].skin_names),
             wear = handle:slider_float('Wear ##' .. name, 0.001, 1.0, 0.001),
             seed = handle:slider_int('Seed ##' .. name, 1, 1000, 1),
+
+            handle:color('Color 1##' .. name, nil, true, false),
+            handle:color('Color 2##' .. name, nil, true, false),
+            handle:color('Color 3##' .. name, nil, true, false),
+            handle:color('Color 4##' .. name, nil, true, false)
         };
 
         for _, element in pairs(weapon_config) do
@@ -310,7 +316,137 @@ local skinchanger = {}; do
         gui.weapons[name] = weapon_config;
     end;
 
+    local schema, paint_kit_color; do
+        local ffi = require('ffi');
+
+        --read mem
+        local read = function(typename, address)
+            if address == nil then
+                return function(address)
+                    return ffi.cast(ffi.typeof(typename .. '*'), ffi.cast('uint32_t ', address))[0];
+                end;
+            end;
+            return ffi.cast(ffi.typeof(typename .. '*'), ffi.cast('uint32_t ', address))[0];
+        end;
+
+        local follow_call = function(ptr)
+            local insn = ffi.cast('uint8_t*', ptr);
+
+            if insn[0] == 0xE8 then
+                -- relative, displacement relative to next instruction
+                local offset = ffi.cast('int32_t*', insn + 1)[0];
+
+                return insn + offset + 5;
+            elseif insn[0] == 0xFF and insn[1] == 0x15 then
+                -- absolute
+                local call_addr = ffi.cast('uint32_t**', ffi.cast('const char*', ptr) + 2);
+
+                return call_addr[0][0];
+            elseif insn[0] == 0xB0 then
+                return ffi.cast('uint32_t', ptr + 4 + read('uint32_t', ptr));
+            else
+                error(string.format('unknown instruction to follow: %02X!', insn[0]));
+            end;
+        end;
+
+        local string_t = [[struct {
+            char* buffer;
+            int capacity;
+            int grow_size;
+            int length;
+        }]];
+
+        local paint_kit_t = [[struct {
+            int nID;
+            ]] .. string_t .. [[ name;
+            ]] .. string_t .. [[ description;
+            ]] .. string_t .. [[ tag;
+            ]] .. string_t .. [[ same_name_family_aggregate;
+            ]] .. string_t .. [[ pattern;
+            ]] .. string_t .. [[ normal;
+            ]] .. string_t .. [[ logoMaterial;
+            bool baseDiffuseOverride;
+            int rarity;
+            int style;
+            uint8_t color[4][4];
+            char pad[35];
+            float wearRemapMin;
+            float wearRemapMax;
+        }]];
+
+        local create_map_t = function(key_type, value_type)
+            return ffi.typeof([[struct {
+    void* lessFunc;
+    struct {
+        struct {
+            int left;
+            int right;
+            int parent;
+            int type;
+            $ key;
+            $ value;
+        }* memory;
+        int allocationCount;
+        int growSize;
+    } memory;
+    int root;
+    int num_elements;
+    int firstFree;
+    int lastAlloc;
+    struct {
+        int left;
+        int right;
+        int parent;
+        int type;
+        $ key;
+        $ value;
+    }* elements;
+}
+]], ffi.typeof(key_type), ffi.typeof(value_type), ffi.typeof(key_type), ffi.typeof(value_type));
+        end;
+
+        item_schema_t = ffi.typeof([[struct { $ paint_kits; }*]], create_map_t('int', paint_kit_t .. '*'));
+
+        local get_item_schema_addr = find_pattern('client.dll', ' A1 ? ? ? ? 85 C0 75 53') or error('cant find get_item_scham()');
+        local get_item_schema_fn = ffi.cast('uint32_t(__stdcall*)()', get_item_schema_addr);
+
+        local get_paint_kit_definition_addr = find_pattern('client.dll', ' E8 ? ? ? ? 8B F0 8B 4E 7C') or error('cant find get_paint_kit_definition');
+        local get_paint_kit_definition_fn = ffi.cast('void*(__thiscall*)(void*, int)', follow_call(get_paint_kit_definition_addr));
+
+        function paint_kit_color(obj, c)
+            obj[0] = c.r * 255;
+            obj[1] = c.g * 255;
+            obj[2] = c.b * 255;
+            obj[3] = c.a * 255;
+        end;
+
+        local item_schema_c = {};
+
+        function item_schema_c.create(ptr)
+            return setmetatable({
+                ptr = ptr,
+            }, {
+                __index = item_schema_c,
+                __metatable = 'item_schema'
+            });
+        end;
+
+        function item_schema_c:get_paint_kit(index)
+            local paint_kit_addr = get_paint_kit_definition_fn(self.ptr, index);
+            if paint_kit_addr == nil then return; end;
+
+
+            return ffi.cast(ffi.typeof(paint_kit_t .. '*'), paint_kit_addr);
+        end;
+
+        schema = item_schema_c.create(ffi.cast(item_schema_t, get_item_schema_fn() + 4));
+    end;
+
     local m_nDeltaTick = ffi.cast('int*', ffi.cast('uintptr_t', ffi.cast('uintptr_t***', (ffi.cast('uintptr_t**', memory:create_interface('engine.dll', 'VEngineClient014'))[0][12] + 16))[0][0]) + 0x0174);
+
+    local paint_kits = {};
+    local paint_kits_cache = {};
+    color_t.__eq = function(s, o) return s.r == o.r and s.g == o.g and s.b == o.b and s.a == o.a; end;
 
     local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018')); do
         local update_skin = function(weapon)
@@ -342,11 +478,50 @@ local skinchanger = {}; do
                 return;
             end;
 
+            local paint_kit = paint_kits[skin_id] or schema:get_paint_kit(skin_id);
+            paint_kits[skin_id] = paint_kit;
+
+            if (paint_kits_cache[weapon_name] == nil) then
+                paint_kits_cache[weapon_name] = {};
+            end;
+
+            if (paint_kits_cache[weapon_name][skin_id] == nil) then
+                paint_kits_cache[weapon_name][skin_id] = {};
+            end;
+
+            for x = 1, 4 do
+                local ref = gui.weapons[weapon_name][x];
+
+                ---@diagnostic disable-next-line: need-check-nil, undefined-field
+                local kit_color = paint_kit.color[x - 1];
+
+                if (paint_kits_cache[weapon_name][skin_id][x] == nil) then
+                    print('setting up default values');
+
+                    paint_kits_cache[weapon_name][skin_id][x] = color_t.new(kit_color[0] / 255, kit_color[1] / 255, kit_color[2] / 255, kit_color[3] / 255);
+
+                    ref:set(paint_kits_cache[weapon_name][skin_id][x]);
+                end;
+
+                local ref_value = ref:get();
+
+                if (paint_kits_cache[weapon_name][skin_id][x] ~= ref_value) then
+                    paint_kits_cache[weapon_name][skin_id][x] = ref_value;
+                end;
+            end;
+
             if (item_id_high[0] ~= -1 or fallback_paint_kit[0] ~= skin_id or fallback_wear[0] ~= wear or fallback_seed[0] ~= seed) then
                 item_id_high[0] = -1;
                 fallback_paint_kit[0] = skin_id;
                 fallback_wear[0] = wear;
                 fallback_seed[0] = seed;
+
+                for x = 1, 4 do
+                    ---@diagnostic disable-next-line: need-check-nil, undefined-field
+                    local kit_color = paint_kit.color[x - 1];
+
+                    paint_kit_color(kit_color, paint_kits_cache[weapon_name][skin_id][x]);
+                end;
 
                 m_nDeltaTick[0] = -1;
             end;
