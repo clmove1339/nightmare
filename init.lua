@@ -188,8 +188,13 @@ local visualization = {}; do
 end;
 
 local skinchanger = {}; do
+    --#region: Ponos deda
     local m_lifeState = engine.get_netvar_offset('DT_BasePlayer', 'm_lifeState');
     local m_hActiveWeapon = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hActiveWeapon');
+    local m_iItemIDHigh = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh');
+    local m_nFallbackPaintKit = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit');
+    local m_flFallbackWear = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear');
+    local m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed');
 
     local IClientEntityList = memory:interface('client', 'VClientEntityList003', {
         GetClientEntity = { 3, 'uintptr_t(__thiscall*)(void*, int)' },
@@ -200,7 +205,7 @@ local skinchanger = {}; do
         return ffi.cast('char*', self[m_lifeState])[0] == 0;
     end;
 
-    local main = ui.create('Skinchanger');
+    local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
     --#region structs
     ffi.cdef [[
@@ -385,6 +390,8 @@ local skinchanger = {}; do
     local get_paint_kit_definition_fn = ffi.cast('void*(__thiscall*)(void*, int)', follow_call(get_paint_kit_definition_addr));
 
     local item_schema_c = {}; do
+        local paint_kit_t_typeof = ffi.typeof(paint_kit_t .. '*');
+
         function item_schema_c.create(ptr)
             return setmetatable({
                 ptr = ptr,
@@ -408,7 +415,7 @@ local skinchanger = {}; do
             local paint_kit_addr = get_paint_kit_definition_fn(self.ptr, index);
             if paint_kit_addr == nil then return; end;
 
-            return ffi.cast(ffi.typeof(paint_kit_t .. '*'), paint_kit_addr);
+            return ffi.cast(paint_kit_t_typeof, paint_kit_addr);
         end;
     end;
 
@@ -435,15 +442,15 @@ local skinchanger = {}; do
             ConvertUnicodeToANSI = { 16, 'int(__thiscall*)(void*, wchar_t*, char*, int)' },
         });
 
+        local buffer_size = 1024;
+        local buffer = ffi.new('char[?]', buffer_size);
+
         function localize(tag)
             local wchar = ILocalize:Find(tag);
 
             if (wchar == nil) then
                 return;
             end;
-
-            local buffer_size = 1024;
-            local buffer = ffi.new('char[?]', buffer_size);
 
             ILocalize:ConvertUnicodeToANSI(wchar, buffer, buffer_size);
             return ffi.string(buffer);
@@ -452,8 +459,48 @@ local skinchanger = {}; do
 
     local skin_names = {};
     local skin_ids = {};
+    local weapon_data = {};
+    local weapon_names = {
+        'weapon_ak47',
+        'weapon_aug',
+        'weapon_awp',
+        'weapon_bizon',
+        'weapon_cz75a',
+        'weapon_deagle',
+        'weapon_elite', -- Dual Berettas
+        'weapon_famas',
+        'weapon_fiveseven',
+        'weapon_g3sg1',
+        'weapon_galilar', -- Galil AR
+        'weapon_glock',
+        'weapon_m249',
+        'weapon_m4a1',          -- M4A4
+        'weapon_m4a1_silencer', -- M4A1-S
+        'weapon_mac10',
+        'weapon_mag7',
+        'weapon_mp5sd',
+        'weapon_mp7',
+        'weapon_mp9',
+        'weapon_negev',
+        'weapon_nova',
+        'weapon_hkp2000', -- P2000
+        'weapon_p250',
+        'weapon_p90',
+        'weapon_revolver', -- R8 Revolver
+        'weapon_sawedoff',
+        'weapon_scar20',
+        'weapon_ssg08',
+        'weapon_sg556', -- SG 553
+        'weapon_tec9',
+        'weapon_ump45',
+        'weapon_usp_silencer', -- USP-S
+        'weapon_xm1014'
+    };
 
-    local function create_skin_list(weapon_name)
+    local function create_skin_list()
+        skin_names = {};
+        skin_ids = {};
+
         for i = 1, 11000 do
             if i == 3000 then
                 i = 10000;
@@ -468,36 +515,51 @@ local skinchanger = {}; do
                 ---@diagnostic enable
 
                 if (tag ~= nil) then
-                    local weapon_name = weapon_name;
-                    local item_image = string.format('resource/flash/econ/default_generated/%s_%s_light_large.png', weapon_name, name);
+                    for _, weapon_name in ipairs(weapon_names) do
+                        if not weapon_data[weapon_name] then
+                            weapon_data[weapon_name] = {
+                                skin_names = {},
+                                skin_ids = {},
+                            };
+                        end;
 
-                    if (is_file_valid(item_image)) then
-                        skin_names[#skin_names + 1] = tag;
-                        skin_ids[tag] = i;
+                        local ptr = weapon_data[weapon_name];
+                        local item_image = string.format('resource/flash/econ/default_generated/%s_%s_light_large.png', weapon_name, name);
+
+                        if (is_file_valid(item_image)) then
+                            ptr.skin_names[#ptr.skin_names + 1] = tag;
+                            ptr.skin_ids[tag] = i;
+                        end;
                     end;
                 end;
             end;
         end;
     end;
 
+    --#endregion
 
-    create_skin_list('weapon_ssg08');
-    local skin_selector = main:combo('skin', skin_names);
+    local handle = ui.create('Skinchanger');
 
-    register_callback('paint', function()
-        print(skin_id);
-    end);
-
+    create_skin_list();
 
     local gui = {
-        wear = main:slider_float('Wear', 0.001, 1.0, 0.001),
-        seed = main:slider_int('Seed', 1, 1000, 1)
+        weapons = {},
+        weapon_selector = handle:combo('Weapon selector', weapon_names),
     };
 
-    local m_iItemIDHigh = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh');
-    local m_nFallbackPaintKit = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit');
-    local m_flFallbackWear = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear');
-    local m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed');
+    for i, name in ipairs(weapon_names) do
+        local weapon_config = {
+            skin = handle:combo('Skin selector##' .. name, weapon_data[name].skin_names),
+            wear = handle:slider_float('Wear ##' .. name, 0.001, 1.0, 0.001),
+            seed = handle:slider_int('Seed ##' .. name, 1, 1000, 1),
+        };
+
+        for _, element in pairs(weapon_config) do
+            element:depend({ { gui.weapon_selector, i - 1 } });
+        end;
+
+        gui.weapons[name] = weapon_config;
+    end;
 
     local old_kit = -1;
 
@@ -544,21 +606,36 @@ local skinchanger = {}; do
                 local fallback_wear = ffi.cast('float*', weapon + m_flFallbackWear);
                 local fallback_seed = ffi.cast('int*', weapon + m_nFallbackSeed);
 
-                local selected_skin = skin_selector:get();
-                local skin_name = skin_names[selected_skin + 1];
-                local skin_id = skin_ids[skin_name];
+                local weapon_info = native_GetWeaponInfo(weapon);
 
-                local paint = skin_id;
-                local wear = gui.wear:get();
-                local seed = gui.seed:get();
+                if not weapon_info then
+                    return;
+                end;
 
-                item_id_high[0] = -1;
-                fallback_paint_kit[0] = paint;
-                fallback_wear[0] = wear;
-                fallback_seed[0] = seed;
+                local weapon_name = ffi.string(weapon_info.ConsoleName);
 
-                if (old_kit ~= paint) then
-                    old_kit = paint;
+                if not gui.weapons[weapon_name] then
+                    return;
+                end;
+
+                local selected_skin = gui.weapons[weapon_name].skin:get();
+                local wear = gui.weapons[weapon_name].wear:get();
+                local seed = gui.weapons[weapon_name].seed:get();
+
+                local skin_name = weapon_data[weapon_name].skin_names[selected_skin + 1];
+                local skin_id = weapon_data[weapon_name].skin_ids[skin_name];
+
+                if not skin_id then
+                    return;
+                end;
+
+                if (item_id_high[0] ~= -1 or fallback_paint_kit[0] ~= skin_id or fallback_wear[0] ~= wear or fallback_seed[0] ~= seed) then
+                    item_id_high[0] = -1;
+                    fallback_paint_kit[0] = skin_id;
+                    fallback_wear[0] = wear;
+                    fallback_seed[0] = seed;
+
+                    print('skins updated');
 
                     m_nDeltaTick[0] = -1;
                 end;
