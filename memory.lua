@@ -38,6 +38,33 @@ local memory = {}; do
         end;
     end;
 
+    local function vtable_thunk(index, ...)
+        local ctype = ffi.typeof(...);
+
+        return function(instance, ...)
+            assert(instance ~= nil, 'invalid instance');
+
+            local vtable = ffi.cast('void***', instance);
+            local vfunc = ffi.cast(ctype, vtable[0][index]);
+
+            return vfunc(instance, ...);
+        end;
+    end;
+
+    local function vtable_bind(module_name, interface_name, index, ...)
+        local addr = utils.create_interface(module_name, interface_name);
+        assert(addr, 'invalid interface');
+
+        local ctype = ffi.typeof(...);
+
+        local vtable = ffi.cast('void***', addr);
+        local vfunc = ffi.cast(ctype, vtable[0][index]);
+
+        return function(...)
+            return vfunc(vtable, ...);
+        end;
+    end;
+
     ---@public
     function memory:create_interface(library, name)
         local handle = ffi.C.GetModuleHandleA(library);
@@ -62,6 +89,16 @@ local memory = {}; do
         assert(ptr, 'failed to create interface');
 
         return class:new(fns)(ptr);
+    end;
+
+    function memory:get_vfunc(arg, ...)
+        if (type(arg) == 'number') then
+            return vtable_thunk(arg, ...);
+        end;
+
+        if (type(arg) == 'string') then
+            return vtable_bind(arg, ...);
+        end;
     end;
 end;
 
