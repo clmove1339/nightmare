@@ -14,11 +14,11 @@ do
     end;
 end;
 
-require 'nixware';
+require 'enums';
 require 'global';
 
-local ui = require 'ui';
 local memory = require 'memory';
+local ui = require 'ui';
 local utils = require 'utils';
 local engine_client = require 'engine_client';
 local vmt = require 'vmt';
@@ -63,10 +63,6 @@ local antiaim = {}; do
     end;
 
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
-    local netvars = {
-        m_fFlags = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
-        m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
-    }; -- мне абсолютно поебать что оно возможно не там где надо находится
 
     ---@param cmd user_cmd_t
     function antiaim:get_statement(cmd)
@@ -204,21 +200,13 @@ end;
 
 local skinchanger = {}; do
     --#region: Ponos deda
-    local m_lifeState = engine.get_netvar_offset('DT_BasePlayer', 'm_lifeState');
-    local m_hActiveWeapon = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hActiveWeapon');
-    local m_hMyWeapons = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hMyWeapons');
-    local m_iItemIDHigh = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh');
-    local m_nFallbackPaintKit = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit');
-    local m_flFallbackWear = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear');
-    local m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed');
-
     local IClientEntityList = memory:interface('client', 'VClientEntityList003', {
         GetClientEntity = { 3, 'uintptr_t(__thiscall*)(void*, int)' },
         GetClientEntityFromHandle = { 4, 'uintptr_t(__thiscall*)(void*, uintptr_t)' }
     });
 
     function entity_t:is_alive()
-        return ffi.cast('char*', self[m_lifeState])[0] == 0;
+        return ffi.cast('char*', self[netvars.m_lifeState])[0] == 0;
     end;
 
     local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
@@ -261,6 +249,43 @@ local skinchanger = {}; do
         'weapon_xm1014'
     };
 
+    local formatted_weapon_names = {
+        'AK-47',
+        'AUG',
+        'AWP',
+        'PP-Bizon',
+        'CZ75-Auto',
+        'Desert Eagle',
+        'Dual Berettas',
+        'FAMAS',
+        'Five-SeveN',
+        'G3SG1',
+        'Galil AR',
+        'Glock-18',
+        'M249',
+        'M4A4',
+        'M4A1-S',
+        'MAC-10',
+        'MAG-7',
+        'MP5-SD',
+        'MP7',
+        'MP9',
+        'Negev',
+        'Nova',
+        'P2000',
+        'P250',
+        'P90',
+        'R8 Revolver',
+        'Sawed-Off',
+        'SCAR-20',
+        'SSG 08',
+        'SG 553',
+        'Tec-9',
+        'UMP-45',
+        'USP-S',
+        'XM1014'
+    };
+
     local weapon2index = {};
 
     for i, v in ipairs(weapon_names) do
@@ -273,7 +298,7 @@ local skinchanger = {}; do
 
     local gui = {
         weapons = {},
-        weapon_selector = handle:combo('Weapon selector', weapon_names),
+        weapon_selector = handle:combo('Weapon selector', formatted_weapon_names),
     };
 
     for i, name in ipairs(weapon_names) do
@@ -293,22 +318,11 @@ local skinchanger = {}; do
     local m_nDeltaTick = ffi.cast('int*', ffi.cast('uintptr_t', ffi.cast('uintptr_t***', (ffi.cast('uintptr_t**', memory:create_interface('engine.dll', 'VEngineClient014'))[0][12] + 16))[0][0]) + 0x0174);
 
     local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018')); do
-        local FrameStages = {
-            FRAME_UNDEFINED = -1,
-            FRAME_START = 0,
-            FRAME_NET_UPDATE_START = 1,
-            FRAME_NET_UPDATE_POSTDATAUPDATE_START = 2,
-            FRAME_NET_UPDATE_POSTDATAUPDATE_END = 3,
-            FRAME_NET_UPDATE_END = 4,
-            FRAME_RENDER_START = 5,
-            FRAME_RENDER_END = 6
-        };
-
         local update_skin = function(weapon)
-            local item_id_high = ffi.cast('int*', weapon + m_iItemIDHigh);
-            local fallback_paint_kit = ffi.cast('int*', weapon + m_nFallbackPaintKit);
-            local fallback_wear = ffi.cast('float*', weapon + m_flFallbackWear);
-            local fallback_seed = ffi.cast('int*', weapon + m_nFallbackSeed);
+            local item_id_high = ffi.cast('int*', weapon + netvars.m_iItemIDHigh);
+            local fallback_paint_kit = ffi.cast('int*', weapon + netvars.m_nFallbackPaintKit);
+            local fallback_wear = ffi.cast('float*', weapon + netvars.m_flFallbackWear);
+            local fallback_seed = ffi.cast('int*', weapon + netvars.m_nFallbackSeed);
 
             local weapon_info = native_GetWeaponInfo(weapon);
 
@@ -355,7 +369,7 @@ local skinchanger = {}; do
                     return;
                 end;
 
-                local my_weapons = ffi.cast('int*', me[m_hMyWeapons]);
+                local my_weapons = ffi.cast('int*', me[netvars.m_hMyWeapons]);
 
                 for i = 0, 10 do
                     local weapon_handle = my_weapons[i];
@@ -367,7 +381,7 @@ local skinchanger = {}; do
                     end;
                 end;
 
-                local weapon_handle = ffi.cast('int*', me[m_hActiveWeapon]);
+                local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
 
                 if (weapon_handle == nil) then
                     return;

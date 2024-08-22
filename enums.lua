@@ -1,3 +1,26 @@
+netvars = {
+    m_lifeState = engine.get_netvar_offset('DT_BasePlayer', 'm_lifeState'),
+    m_hActiveWeapon = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hActiveWeapon'),
+    m_hMyWeapons = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hMyWeapons'),
+    m_iItemIDHigh = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh'),
+    m_nFallbackPaintKit = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit'),
+    m_flFallbackWear = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear'),
+    m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed'),
+    m_fFlags = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
+    m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
+};
+
+FrameStages = {
+    FRAME_UNDEFINED = -1,
+    FRAME_START = 0,
+    FRAME_NET_UPDATE_START = 1,
+    FRAME_NET_UPDATE_POSTDATAUPDATE_START = 2,
+    FRAME_NET_UPDATE_POSTDATAUPDATE_END = 3,
+    FRAME_NET_UPDATE_END = 4,
+    FRAME_RENDER_START = 5,
+    FRAME_RENDER_END = 6
+};
+
 nixware = {
     ['Movement'] = {
         ['Anti aim'] = {
