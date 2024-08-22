@@ -14,7 +14,6 @@ end;
 
 require 'nixware';
 require 'global';
-require 'utest';
 
 local ui = require 'ui';
 local memory = require 'memory';
