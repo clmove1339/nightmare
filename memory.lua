@@ -52,7 +52,7 @@ local memory = {}; do
     end;
 
     local function vtable_bind(module_name, interface_name, index, ...)
-        local addr = utils.create_interface(module_name, interface_name);
+        local addr = memory:create_interface(module_name, interface_name);
         assert(addr, 'invalid interface');
 
         local ctype = ffi.typeof(...);

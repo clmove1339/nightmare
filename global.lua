@@ -4,6 +4,8 @@ NotImplemented = 'NotImplemented';
 ffi = require 'ffi'; do
     ffi.cdef [[
         // add cdef declares here
+        void* GetModuleHandleA(const char*);
+        void* GetProcAddress(void*, const char*);
     ]];
 end;
 
