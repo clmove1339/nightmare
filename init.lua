@@ -17,6 +17,7 @@ require 'global';
 
 local ui = require 'ui';
 local memory = require 'memory';
+local utils = require 'utils';
 
 local aimbot = {}; do
     ---@private
