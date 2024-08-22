@@ -8,7 +8,7 @@ local utils = {}; do
 
     local IEngineSound = memory:interface('engine.dll', 'IEngineSoundClient003', {
         EmitAmbientSound = { 12, 'int(__thiscall*)(void*, const char*, float, int, int, float)' },
-        StopSoundByGuid = { 17, 'int(__thiscall*)(void*, int, bool)' },
+        StopSoundByGuid = { 17, 'void(__thiscall*)(void*, int, bool)' },
     });
 
     ---@public
@@ -25,7 +25,7 @@ local utils = {}; do
     ---@param pitch? number
     ---@param flags? number
     ---@param delay? number
-    ---@return unknown
+    ---@return number
     function utils:play_sound(sound, volume, pitch, flags, delay)
         volume = volume or 1;
         pitch = pitch or 100;
@@ -37,9 +37,8 @@ local utils = {}; do
 
     ---@param guid number
     ---@param force_sync? boolean
-    ---@return unknown
     function utils:stop_sound(guid, force_sync)
-        return IEngineSound:StopSoundByGuid(guid, force_sync or false);
+        IEngineSound:StopSoundByGuid(guid, force_sync or false);
     end;
 end;
 
