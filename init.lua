@@ -1,17 +1,12 @@
 do
-    local import = require;
-
-    ---@param modname string
-    ---@return any
-    require = function(modname)
-        local success, module = pcall(import, modname);
-
-        if not success then
-            module = import(string.format('nightmare.%s', modname):gsub('%.', '/'));
-        end;
-
-        return module;
+    local get_csgo_folder = function()
+        local source = debug.getinfo(1, 'S').source:sub(2, -1);
+        return source:match('^(.-)nix/') or source:match('^(.-)lua\\');
     end;
+
+    local csgo_folder = get_csgo_folder();
+    package.path = package.path .. string.format('%slua\\nightmare\\?.lua;', csgo_folder);
+    package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
 
 require 'libs.enums';
