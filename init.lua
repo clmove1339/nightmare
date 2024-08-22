@@ -29,8 +29,7 @@ local aimbot = {}; do
     handle:combo('Resolver Type', {
         'Off',
         'Default',
-        'Extended',
-        'SISKI MASISKI'
+        'Extended'
     });
 end;
 
