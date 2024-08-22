@@ -6,6 +6,7 @@ local ui = {}; do
     ---@type function[]
     local depend_list = {};
 
+    ---@param element menu_item
     ---@param depends table
     local function depend(element, depends)
         depend_list[#depend_list + 1] = function()
@@ -31,14 +32,39 @@ local ui = {}; do
         end;
     end;
 
-    check_box_t.depend = depend;
-    combo_box_t.depend = depend;
-    multi_combo_box_t.depend = depend;
-    slider_float_t.depend = depend;
-    slider_int_t.depend = depend;
-    key_bind_t.depend = depend;
-    button_t.depend = depend;
-    color_picker_t.depend = depend;
+    ---Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
+    ---@param element menu_item
+    ---@param connections table
+    local function connect(element, connections)
+        depend_list[#depend_list + 1] = function()
+            local is_active = element:get();
+
+            for _, dependant in ipairs(connections) do
+                dependant:set_visible(is_active);
+            end;
+        end;
+    end;
+
+    local menu_items_list = {
+        check_box_t,
+        combo_box_t,
+        multi_combo_box_t,
+        slider_float_t,
+        slider_int_t,
+        key_bind_t,
+        button_t,
+        color_picker_t,
+    };
+
+    for _, item in pairs(menu_items_list) do
+        item.depend = depend;
+        item.connect = connect;
+    end;
+
+    ---@diagnostic disable-next-line: circle-doc-class
+    ---@class menu_item: menu_item
+    ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
+    ---@field connect fun(self: menu_item, connections: menu_item[]): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 
     ---@class c_tab
     ---@field name string
