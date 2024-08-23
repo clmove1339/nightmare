@@ -9,7 +9,6 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
 
-
 require 'libs.enums';
 require 'libs.global';
 
@@ -24,13 +23,8 @@ local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
 
-    local e = handle:switch('ENABLE CUSTOM_RESOZOLVER');
-
-    handle:combo('Resolver Type', {
-        'Off',
-        'Default',
-        'Extended'
-    });
+    local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER');
+    local resolver_type = handle:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
 end;
 
 local antiaim = {}; do

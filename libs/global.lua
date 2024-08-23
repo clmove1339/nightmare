@@ -3,6 +3,33 @@ NotImplemented = 'NotImplemented';
 unpack = unpack or table.unpack;
 table.unpack = unpack;
 
+---@param v any
+---@return type
+function typeof(v)
+    local vtype = type(v);
+
+    if (vtype == 'table' or vtype == 'userdata') then
+        local meta = getmetatable(v);
+        if not meta then
+            return 'table';
+        end;
+
+        local meta_type = meta.__type;
+
+        if meta_type then
+            if meta_type.name then
+                return meta_type.name;
+            else
+                return meta_type;
+            end;
+        end;
+
+        return 'table';
+    end;
+
+    return vtype;
+end;
+
 ffi = require 'ffi'; do
     ffi.cdef [[
         void* GetModuleHandleA(const char*);

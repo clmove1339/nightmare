@@ -32,16 +32,64 @@ local ui = {}; do
         end;
     end;
 
-    ---Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
+    ---@param element any
+    ---@param i? any
+    ---@param upvalue? boolean
+    ---@return boolean
+    local function handle_value(element, i, upvalue)
+        if not element then
+            return upvalue;
+        end;
+
+        local type = typeof(element);
+        local is_i_number = typeof(tonumber(i)) == 'number';
+        local i = is_i_number and tonumber(i) or i;
+
+        if type == 'base_check_box_t' then
+            return element:get();
+        elseif type == 'base_combo_box_t' and is_i_number then
+            return element:get() == i - 1;
+        elseif type == 'base_multi_combo_box_t' and is_i_number then
+            return element:get(i);
+        elseif type == 'base_slider_int_t' and is_i_number then
+            return element:get() == i;
+        elseif type == 'base_slider_float_t' and is_i_number then
+            return math.abs(element:get() - i) < 0.01;
+        elseif type == 'base_key_bind_t' then
+            return element:is_active();
+        elseif type == 'base_color_picker_t' then
+            return element:get() == i;
+        end;
+
+        return false;
+    end;
+
+    ---@param table table<string|number, menu_item[]|menu_item>
+    ---@param upvalue? boolean
+    ---@param master? menu_item
+    local function recursive_visible(table, upvalue, master)
+        local master = table.master or master;
+        local upvalue = upvalue == nil and true or upvalue;
+
+        for id, dependant in pairs(table) do
+            local is_master = id == 'master';
+            local is_visible = handle_value(master, id, upvalue);
+            local type = typeof(dependant);
+
+            if type == 'table' then
+                recursive_visible(dependant, upvalue and is_visible);
+            elseif type:find('base_') then
+                dependant:set_visible((is_master and upvalue) or (is_visible and upvalue));
+            end;
+        end;
+    end;
+
     ---@param element menu_item
     ---@param connections table
-    local function connect(element, connections)
+    ---@param is_active boolean
+    local function connect(element, connections, is_active)
         depend_list[#depend_list + 1] = function()
-            local is_active = element:get();
-
-            for _, dependant in ipairs(connections) do
-                dependant:set_visible(is_active);
-            end;
+            recursive_visible(connections, is_active, element);
         end;
     end;
 
@@ -64,7 +112,7 @@ local ui = {}; do
     ---@diagnostic disable-next-line: circle-doc-class
     ---@class menu_item: menu_item
     ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
-    ---@field connect fun(self: menu_item, connections: menu_item[]): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
+    ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 
     ---@class c_tab
     ---@field name string

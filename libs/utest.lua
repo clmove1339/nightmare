@@ -419,4 +419,58 @@ test.new('ui.switch', function()
     return true;
 end);
 
+test.new('ui.connect', function()
+    local ui = require('libs.ui');
+    local handle = ui.create('Aimbot');
+
+    local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER');
+    local resolver_type = handle:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
+
+    custom_resolver:connect({
+        {
+            master = resolver_type,
+            {},
+            {},
+            {
+                iq = handle:slider_int('Resolver iq', 50, 120),
+                extrapolation = handle:slider_float('Extrapolation amount', 0, 1),
+                {
+                    master = handle:switch('Jitter prediction'),
+                    {
+                        master = handle:slider_int('Prediction amount', 0, 6, 1),
+                        [6] = {
+                            master = handle:switch('Normalize on high speed'),
+                            {
+                                master = handle:switch('Visualize prediction'),
+                                {
+                                    master = handle:color('Color of model', color_t.new(0, 0, 0, 0)),
+                                    [color_t.new(1, 1, 1, 1)] = {
+                                        master = handle:switch('Penis'),
+                                        {
+                                            master = handle:keybind('Delta penisov', true, nil, 1),
+                                            {
+                                                master = handle:switch('PIZDA'),
+                                                {
+                                                    master = handle:slider_float('KAKASHKE', 0, 1),
+                                                    [0.5] = {
+                                                        SUKA = handle:switch('SUKA'),
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    ui.delete('Aimbot');
+
+    return true;
+end);
+
 test.main();

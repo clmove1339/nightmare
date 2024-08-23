@@ -369,6 +369,9 @@ button_t = {};
 
 function button_t:execute() end;
 
+button_t.get = nil;
+button_t.set = nil;
+
 ---@param label string
 ---@param location string
 ---@param callback fun()
