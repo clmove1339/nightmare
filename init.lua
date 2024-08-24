@@ -70,7 +70,7 @@ local antiaim = {}; do
         local speed = math.sqrt(cmd.forwardmove ^ 2 + cmd.sidemove ^ 2);
 
         local in_crouch = duck_amount > 0;
-        local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, IN.ATTACK);
+        local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, 1);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
         local in_use = bit.has(cmd.buttons, IN.USE);
 
