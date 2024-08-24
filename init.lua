@@ -11,6 +11,7 @@ end;
 
 require 'libs.enums';
 require 'libs.global';
+require 'libs.entity';
 
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
@@ -56,23 +57,22 @@ local antiaim = {}; do
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
 
     ---@param cmd user_cmd_t
+    ---@return 'Default'|'Standing'|'Running'|'Walking'| 'Crouching'|'Sneaking'|'In Air'|'In Air & Crouching'|'On use'
     function antiaim:get_statement(cmd)
         local me = entitylist.get_local_player();
 
-        if not me then
+        if not (me and me:is_alive()) then
             return states[1];
         end;
 
         local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
         local duck_amount = ffi.cast('int*', me[netvars.m_flDuckAmount])[0];
-        local velocity = math.floor(math.abs(cmd.forwardmove) + math.abs(cmd.sidemove));
+        local speed = math.sqrt(cmd.forwardmove ^ 2 + cmd.sidemove ^ 2);
 
-        local is_fake_duck = menu.find_check_box('Fake duck', 'Movement/Movement'):get() and menu.find_key_bind('Fake duck', 'Movement/Movement'):is_active();
-
-        local in_crouch = duck_amount > 0 or is_fake_duck;
-        local in_air = bit.band(cmd.buttons, bit.lshift(1, 1)) == bit.lshift(1, 1) or bit.band(flags, bit.lshift(1, 0)) == 0;
-        local in_speed = bit.band(cmd.buttons, bit.lshift(1, 17)) == bit.lshift(1, 17);
-        local in_use = bit.band(cmd.buttons, 32) == 32;
+        local in_crouch = duck_amount > 0;
+        local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, IN.ATTACK);
+        local in_speed = bit.has(cmd.buttons, IN.SPEED);
+        local in_use = bit.has(cmd.buttons, IN.USE);
 
         if in_use then
             return states[9];
@@ -83,10 +83,10 @@ local antiaim = {}; do
         end;
 
         if in_crouch then
-            return states[velocity > 1.1 * 3.3 and 6 or 5];
+            return states[speed > 1.5 and 6 or 5];
         end;
 
-        if velocity > 1.1 * 3.3 then
+        if speed > 1.5 then
             return states[in_speed and 4 or 3];
         end;
 
@@ -94,6 +94,7 @@ local antiaim = {}; do
     end;
 
     antiaim.builder = {}; do
+        ---@type table<string, menu_item[]>
         local information = {};
         local state_selector = handle:combo('State', states, 0);
 
@@ -115,7 +116,13 @@ local antiaim = {}; do
                 local is_default_state = state == 'Default';
                 local is_override_checkbox = element_name == 'override';
 
-                element:depend({ { enable, true }, { state_selector, index - 1 }, { sub_handle, 1 }, not (is_default_state and is_override_checkbox), (is_default_state or is_override_checkbox) and true or { state_info.override, true } });
+                element:depend({
+                    { enable,         true },
+                    { state_selector, index - 1 },
+                    { sub_handle,     1 },
+                    not (is_default_state and is_override_checkbox),
+                    (is_default_state or is_override_checkbox) and true or { state_info.override, true },
+                });
             end;
 
             information[state] = state_info;
@@ -130,7 +137,7 @@ local antiaim = {}; do
         -- я для чего nixware таблицу делал пидор?
         -- чтобы ты опять взял и пукнул в код жиденько?
         -- неоЖИДанно и СВОевременно
-        local elements = {
+        local nixware_elements = {
             pitch = menu.find_combo_box('Pitch', base_path),
             base_yaw = menu.find_combo_box('Base yaw', base_path),
             yaw_offset = menu.find_slider_int('Yaw offset', base_path),
@@ -153,14 +160,10 @@ local antiaim = {}; do
 
             -- Тут кароче пастроем бальшо функцый для лэгит аа
 
-            for name, element in pairs(settings) do
-                if name == 'override' then
-                    goto continue;
-                end;
-
-                elements[name]:set(element:get());
-
-                ::continue::
+            for name, element in pairs(nixware_elements) do
+                -- Теперь идет обработка только чит элементов
+                -- То есть если добавить свои, то он не будет пытаться их искать в чит элементах
+                element:set(settings[name]:get());
             end;
         end;
 
@@ -178,19 +181,191 @@ local visualization = {}; do
     ---@private
     local handle = ui.create('Visualization');
 
-    local old_value = cvars.cam_idealdist:get_int();
-    local camera_distance = handle:slider_int('3rd person distance', 30, 180, old_value);
+    local third_person = {}; do
+        local old_value = cvars.cam_idealdist:get_int();
+        local camera_distance = handle:slider_int('3rd person distance', 30, 180, old_value);
 
-    register_callback('paint', function()
-        if camera_distance:get() ~= old_value then
-            cvars.cam_idealdist:set_int(camera_distance:get());
-            old_value = cvars.cam_idealdist:get_int();
-        end;
-    end);
+        register_callback('paint', function()
+            local distance = camera_distance:get();
+            local delta = math.abs(old_value - distance);
+
+            if delta > 0.1 then
+                old_value = math.lerp(old_value, distance, 0.2);
+                cvars.cam_idealdist:set_float(old_value);
+            end;
+        end);
+    end;
+
+    local viewmodel_in_scope = {}; do
+        local old_value = cvars.fov_cs_debug:get_int() == 90; -- fov_cs_debug
+        local enable = handle:switch('Viewmodel in scope');
+
+        register_callback('paint', function()
+            local enable = enable:get();
+
+            if old_value ~= enable then
+                cvars.fov_cs_debug:set_int(enable and 90 or 0);
+                old_value = enable;
+            end;
+        end);
+    end;
 end;
 
 local misc = {}; do
+    ---@private
     local handle = ui.create('Misc');
+
+    local killsay = {}; do
+        local class, switch = handle:switch('Killsay', false, true);
+        local CPM = class:slider_int('Characters per minute', 200, 500, 300); -- Characters per minute
+
+        ---@type table<number, {list: string[], flags?: table<boolean?>}>
+        local phrases = require 'libs.phrases';
+        local already_writing = false;
+
+        local function time_for_phrase(phrase, cpm)
+            local totalTime = 0;
+            local cpm = (cpm / 300);
+
+            for i = 1, #phrase do
+                local char = phrase:sub(i, i):lower();
+                local speed = TypingSpeeds[char] or 300;
+                speed = speed;
+                totalTime = totalTime + (60 / (speed * cpm));
+            end;
+
+            return totalTime;
+        end;
+
+        local function is_event_valid(event)
+            local userid = event:get_int('userid');
+            local attacker_id = event:get_int('attacker');
+
+            local died = entitylist.get(userid, true);
+            local attacker = entitylist.get(attacker_id, true);
+            local me = entitylist.get_local_player();
+
+            if not (me and died and attacker) then
+                return;
+            end;
+
+            local my_index = me:get_index();
+
+            if died:get_index() == my_index then
+                return;
+            end;
+
+            if attacker:get_index() ~= my_index then
+                return;
+            end;
+
+            return true;
+        end;
+
+        local function is_valid_flags(event, flags)
+            if type(flags) ~= 'table' then
+                return true;
+            end;
+
+            for name, value in pairs(flags) do
+                local value_type = type(value);
+
+                if value_type == 'number' then
+                    if event:get_int(name) == 0 then
+                        return;
+                    end;
+                elseif value_type == 'string' then
+                    if event:get_string(name) ~= value then
+                        return;
+                    end;
+                elseif value_type == 'boolean' then
+                    if event:get_bool(name) ~= value then
+                        return;
+                    end;
+                end;
+            end;
+
+            return true;
+        end;
+
+        local function filter_phrases(event)
+            local filtered_phrases = {};
+
+            for _, phrase in ipairs(phrases) do
+                if is_valid_flags(event, phrase.flags) then
+                    table.insert(filtered_phrases, phrase);
+                end;
+            end;
+
+            return filtered_phrases;
+        end;
+
+        local function send_phrase(phrase, id)
+            local last_duration = 0;
+
+            for i, phrase in pairs(phrase.list) do
+                local duration = time_for_phrase(phrase, CPM:get());
+                timers.new(
+                    string.format('killsay_%s_%s', id, i),
+                    0.5 + duration + last_duration,
+                    function()
+                        engine.execute_client_cmd(string.format('say "%s"', phrase));
+                    end,
+                    true
+                );
+
+                last_duration = last_duration + duration;
+            end;
+
+            timers.new(
+                string.format('killsay_%s_end', id),
+                0.1 + last_duration,
+                function()
+                    already_writing = false;
+                end,
+                true
+            );
+        end;
+
+        ---@param event game_event_t
+        local function main(event)
+            if not switch:get() then
+                return;
+            end;
+
+            if already_writing then
+                return;
+            end;
+
+            if not is_event_valid(event) then
+                return;
+            end;
+
+            already_writing = true;
+
+            local valid_phrases = filter_phrases(event);
+            local id = math.random(1, #valid_phrases);
+            local phrase = valid_phrases[id];
+
+            send_phrase(phrase, id);
+        end;
+
+        register_callback('player_death', main);
+    end;
+
+    local console_filter; do
+        local old_value = cvars.con_filter_enable:get_bool();
+        local enable = handle:switch('Enable console filter');
+
+        register_callback('paint', function()
+            local enable = enable:get();
+            if old_value ~= enable then
+                cvars.con_filter_enable:set_bool(enable);
+                cvars.con_filter_text:set_string('nightmare');
+                old_value = enable;
+            end;
+        end);
+    end;
 end;
 
 local skinchanger = {}; do
@@ -199,10 +374,6 @@ local skinchanger = {}; do
         GetClientEntity = { 3, 'uintptr_t(__thiscall*)(void*, int)' },
         GetClientEntityFromHandle = { 4, 'uintptr_t(__thiscall*)(void*, uintptr_t)' }
     });
-
-    function entity_t:is_alive()
-        return ffi.cast('char*', self[netvars.m_lifeState])[0] == 0;
-    end;
 
     local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
@@ -495,8 +666,6 @@ local skinchanger = {}; do
                 local kit_color = paint_kit.color[x - 1];
 
                 if (paint_kits_cache[weapon_name][skin_id][x] == nil) then
-                    print('setting up default values');
-
                     paint_kits_cache[weapon_name][skin_id][x] = color_t.new(kit_color[0] / 255, kit_color[1] / 255, kit_color[2] / 255, kit_color[3] / 255);
 
                     ref:set(paint_kits_cache[weapon_name][skin_id][x]);

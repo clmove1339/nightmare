@@ -127,9 +127,8 @@ local ui = {}; do
     ---@field name string
     ---@field elements table
     ---@field location string
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab, check_box_t
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t, nil
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: nil): check_box_t, nil
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: true): c_tab, check_box_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: false): check_box_t, nil
     ---@field button fun(self: c_tab, label: string, fn: function): button_t
     ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
     ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number): combo_box_t
@@ -153,16 +152,15 @@ local ui = {}; do
             local path = string.format('%s/%s', self.location, label);
             local hashed_path = get_hashed_path(path);
 
-            local modified_label = string.format('%s##%d', label, hashed_path);
-            local context = is_group and string.format('%s %s group', self.location, modified_label) or nil;
+            local path_label = string.format('%s##%d', label, hashed_path);
+            local context = is_group and string.format('%s %s group', self.location, path_label) or nil;
+            local shown_label = string.format('%s%s##%d', label, (is_group and ' [  ]' or ''), hashed_path);
 
-            local original_label = label .. (is_group and ' [  ]' or '');
-
-            local element = menu.add_check_box(original_label, self.location, default_value, context);
+            local element = menu.add_check_box(shown_label, self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
             if is_group then
-                return c_tab:new(modified_label, context), element;
+                return c_tab:new(path_label, context), element;
             end;
 
             return element;
@@ -268,13 +266,7 @@ local ui = {}; do
         for _, element in pairs(nixware['Movement']['Anti aim']) do
             element:set_visible(not value);
         end;
-        --[[
-            for _, element in pairs(nixware['Movement']['Movement']) do
-                element:set_visible(not value);
-            end;
-
-            nixware['Movement']['Fakelag'].limit:set_visible(not value);
-        --]]
+        nixware['Movement']['Fakelag'].limit:set_visible(not value);
     end;
 
     function ui.delete(name)

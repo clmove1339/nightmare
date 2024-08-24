@@ -1,7 +1,24 @@
+_DEV = true;
 NATIVE_PRINT = NATIVE_PRINT or print;
 NotImplemented = 'NotImplemented';
 unpack = unpack or table.unpack;
 table.unpack = unpack;
+
+---Checks if a flag is set in a set of flags
+---@param flags integer The set of flags
+---@param flag integer The flag to check
+---@return boolean `true` if the flag is set, otherwise `false`
+bit.has = function(flags, flag)
+    return bit.band(flags, flag) == flag;
+end;
+
+---Checks if a flag is not set in a set of flags
+---@param flags integer The set of flags
+---@param flag integer The flag to check
+---@return boolean `true` if the flag is not set, otherwise `false`
+bit.hasnt = function(flags, flag)
+    return bit.band(flags, flag) == 0;
+end;
 
 ---@param v any
 ---@return type

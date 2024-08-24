@@ -54,7 +54,7 @@ local timers = { objects = {} }; do
     ---@param id any
     ---@param duration number
     ---@param callback function
-    ---@param destroy_after boolean
+    ---@param destroy_after? boolean
     timers.new = function(id, duration, callback, destroy_after)
         if not timers.objects[id] then
             timers.objects[id] = setmetatable({
