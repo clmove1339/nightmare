@@ -8,6 +8,8 @@ netvars = {
     m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed'),
     m_fFlags = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
     m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
+    m_vecVelocity = engine.get_netvar_offset('DT_BasePlayer', 'm_vecVelocity[0]'),
+    m_hGroundEntity = engine.get_netvar_offset('DT_BasePlayer', 'm_hGroundEntity')
 };
 
 FrameStages = {

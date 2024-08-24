@@ -5,6 +5,15 @@ local ui = {}; do
     local selector = menu.add_combo_box('Select tab', base_path, {});
     ---@type function[]
     local depend_list = {};
+    local hash = {};
+
+    local function get_hashed_path(path)
+        if not hash[path] then
+            hash[#hash + 1] = path;
+            hash[path] = #hash;
+        end;
+        return hash[path];
+    end;
 
     ---@param element menu_item
     ---@param depends table
@@ -119,8 +128,8 @@ local ui = {}; do
     ---@field elements table
     ---@field location string
     ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: true): c_tab, check_box_t
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: nil): check_box_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: false): check_box_t, nil
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group: nil): check_box_t, nil
     ---@field button fun(self: c_tab, label: string, fn: function): button_t
     ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
     ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number): combo_box_t
@@ -131,32 +140,39 @@ local ui = {}; do
     local c_tab = {}; do
         ---@private
         function c_tab:new(name, location)
-            local instance = {
+            local instance = setmetatable({
                 name = name,
                 location = location or base_path,
                 elements = {}
-            };
-
-            setmetatable(instance, { __index = c_tab });
+            }, { __index = c_tab });
 
             return instance;
         end;
 
         function c_tab:switch(label, default_value, is_group)
-            label = string.format('%s##%s/%s', label, self.location, label);
-            local context = is_group and string.format('%s %s group', self.location, label) or nil;
-            local element = menu.add_check_box(label .. (is_group and ' [  ]' or ''), self.location, default_value, context);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            local modified_label = string.format('%s##%d', label, hashed_path);
+            local context = is_group and string.format('%s %s group', self.location, modified_label) or nil;
+
+            local original_label = label .. (is_group and ' [  ]' or '');
+
+            local element = menu.add_check_box(original_label, self.location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
             if is_group then
-                return c_tab:new(label, context), element;
+                return c_tab:new(modified_label, context), element;
             end;
 
             return element;
         end;
 
         function c_tab:button(label, fn)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_button(label, self.location, fn or function() end);
             self.elements[#self.elements + 1] = element;
 
@@ -164,7 +180,10 @@ local ui = {}; do
         end;
 
         function c_tab:color(label, default_value, show_label, show_alpha)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_color_picker(label, self.location, show_label, show_alpha, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -172,7 +191,10 @@ local ui = {}; do
         end;
 
         function c_tab:combo(label, items, default_value)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_combo_box(label, self.location, items, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -180,7 +202,10 @@ local ui = {}; do
         end;
 
         function c_tab:keybind(label, show_label, key, type, display_in_list)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_key_bind(label, self.location, show_label, key, type, display_in_list);
             self.elements[#self.elements + 1] = element;
 
@@ -188,7 +213,10 @@ local ui = {}; do
         end;
 
         function c_tab:multicombo(label, items, default_value)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_multi_combo_box(label, self.location, items, default_value or {});
             self.elements[#self.elements + 1] = element;
 
@@ -196,7 +224,10 @@ local ui = {}; do
         end;
 
         function c_tab:slider_int(label, min, max, default_value)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_slider_int(label, self.location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 
@@ -204,7 +235,10 @@ local ui = {}; do
         end;
 
         function c_tab:slider_float(label, min, max, default_value)
-            label = string.format('%s##%s/%s', label, self.location, label);
+            local path = string.format('%s/%s', self.location, label);
+            local hashed_path = get_hashed_path(path);
+
+            label = string.format('%s##%d', label, hashed_path);
             local element = menu.add_slider_float(label, self.location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 

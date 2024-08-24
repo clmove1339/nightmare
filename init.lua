@@ -12,6 +12,7 @@ end;
 require 'libs.enums';
 require 'libs.global';
 
+local timers = require 'libs.timers';
 local memory = require 'libs.memory';
 local ui = require 'libs.ui';
 local utils = require 'libs.utils';
@@ -23,8 +24,8 @@ local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
 
-    local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER');
-    local resolver_type = handle:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
+    local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER', nil, true);
+    local resolver_type = custom_resolver:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
 end;
 
 local antiaim = {}; do
@@ -177,15 +178,19 @@ local visualization = {}; do
     ---@private
     local handle = ui.create('Visualization');
 
-    -- и тут мне тоже абсолютно поебать, сами подравите как надо ( либо я как проснусь )
     local old_value = cvars.cam_idealdist:get_int();
     local camera_distance = handle:slider_int('3rd person distance', 30, 180, old_value);
 
     register_callback('paint', function()
         if camera_distance:get() ~= old_value then
             cvars.cam_idealdist:set_int(camera_distance:get());
+            old_value = cvars.cam_idealdist:get_int();
         end;
     end);
+end;
+
+local misc = {}; do
+    local handle = ui.create('Misc');
 end;
 
 local skinchanger = {}; do
