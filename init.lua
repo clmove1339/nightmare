@@ -381,7 +381,7 @@ local misc = {}; do
                         return;
                     end;
                 elseif value_type == 'string' then
-                    if event:get_string(name):find(value) then
+                    if not event:get_string(name):find(value) then
                         return;
                     end;
                 elseif value_type == 'boolean' then
