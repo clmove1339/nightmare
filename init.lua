@@ -70,7 +70,7 @@ local antiaim = {}; do
         local speed = math.sqrt(cmd.forwardmove ^ 2 + cmd.sidemove ^ 2);
 
         local in_crouch = duck_amount > 0;
-        local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, 1);
+        local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
         local in_use = bit.has(cmd.buttons, IN.USE);
 
@@ -262,6 +262,8 @@ local misc = {}; do
             return true;
         end;
 
+        ---@param event game_event_t
+        ---@param flags table
         local function is_valid_flags(event, flags)
             if type(flags) ~= 'table' then
                 return true;
@@ -275,7 +277,7 @@ local misc = {}; do
                         return;
                     end;
                 elseif value_type == 'string' then
-                    if event:get_string(name) ~= value then
+                    if event:get_string(name):find(value) then
                         return;
                     end;
                 elseif value_type == 'boolean' then

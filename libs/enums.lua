@@ -81,6 +81,41 @@ IN = {
     WALK    = bit.lshift(1, 21),
 };
 
+FL = {
+    ONGROUND              = bit.lshift(1, 0),
+    DUCKING               = bit.lshift(1, 1),
+    ANIMDUCKING           = bit.lshift(1, 2),
+    WATERJUMP             = bit.lshift(1, 3),
+    ONTRAIN               = bit.lshift(1, 4),
+    INRAIN                = bit.lshift(1, 5),
+    FROZEN                = bit.lshift(1, 6),
+    ATCONTROLS            = bit.lshift(1, 7),
+    CLIENT                = bit.lshift(1, 8),
+    FAKECLIENT            = bit.lshift(1, 9),
+    INWATER               = bit.lshift(1, 10),
+    FLY                   = bit.lshift(1, 11),
+    SWIM                  = bit.lshift(1, 12),
+    CONVEYOR              = bit.lshift(1, 13),
+    NPC                   = bit.lshift(1, 14),
+    GODMODE               = bit.lshift(1, 15),
+    NOTARGET              = bit.lshift(1, 16),
+    AIMTARGET             = bit.lshift(1, 17),
+    PARTIALGROUND         = bit.lshift(1, 18),
+    STATICPROP            = bit.lshift(1, 19),
+    GRAPHED               = bit.lshift(1, 20),
+    GRENADE               = bit.lshift(1, 21),
+    STEPMOVEMENT          = bit.lshift(1, 22),
+    DONTTOUCH             = bit.lshift(1, 23),
+    BASEVELOCITY          = bit.lshift(1, 24),
+    WORLDBRUSH            = bit.lshift(1, 25),
+    OBJECT                = bit.lshift(1, 26),
+    KILLME                = bit.lshift(1, 27),
+    ONFIRE                = bit.lshift(1, 28),
+    DISSOLVING            = bit.lshift(1, 29),
+    TRANSRAGDOLL          = bit.lshift(1, 30),
+    UNBLOCKABLE_BY_PLAYER = bit.lshift(1, 31)
+};
+
 TypingSpeeds = {
     ['a'] = 300,
     ['b'] = 250,
