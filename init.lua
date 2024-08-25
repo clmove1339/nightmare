@@ -260,6 +260,7 @@ local antiaim = {}; do
             nixware['Movement']['Anti aim'].enabled:set(enable:get());
 
             local state = antiaim:get_statement(cmd);
+            ---@diagnostic disable-next-line: undefined-field
             state = information[state].override:get() and state or 'Default';
 
             local settings = information[state];
@@ -711,7 +712,7 @@ local skinchanger = {}; do
             local paint_kit_addr = get_paint_kit_definition_fn(self.ptr, index);
             if paint_kit_addr == nil then return; end;
 
-
+            ---@diagnostic disable-next-line: param-type-mismatch
             return ffi.cast(ffi.typeof(paint_kit_t .. '*'), paint_kit_addr);
         end;
 

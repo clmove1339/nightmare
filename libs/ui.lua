@@ -46,7 +46,7 @@ local ui = {}; do
     ---@param upvalue? boolean
     ---@return boolean
     local function handle_value(element, i, upvalue)
-        if not element then
+        if not element and upvalue then
             return upvalue;
         end;
 
@@ -98,7 +98,7 @@ local ui = {}; do
             if type == 'table' then
                 recursive_visible(dependant, upvalue and is_visible);
             elseif type:find('base_') then
-                dependant:set_visible((is_master and upvalue) or (is_visible and upvalue));
+                dependant:set_visible((is_master and upvalue) or (is_visible and upvalue) or false);
             end;
         end;
     end;
@@ -134,7 +134,7 @@ local ui = {}; do
     ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
     ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 
-    ---@class c_tab
+    ---@class c_tab : menu_item
     ---@field name string
     ---@field elements table
     ---@field location string
