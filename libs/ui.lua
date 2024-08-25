@@ -56,8 +56,13 @@ local ui = {}; do
 
         if type == 'base_check_box_t' then
             return element:get();
-        elseif type == 'base_combo_box_t' and is_i_number then
-            return element:get() == i - 1;
+        elseif type == 'base_combo_box_t' then
+            print(i);
+            if is_i_number then
+                return element:get() == i - 1;
+            else
+                return element:get() ~= 0;
+            end;
         elseif type == 'base_multi_combo_box_t' and is_i_number then
             return element:get(i);
         elseif type == 'base_slider_int_t' and is_i_number then
@@ -77,6 +82,11 @@ local ui = {}; do
     ---@param upvalue? boolean
     ---@param master? menu_item
     local function recursive_visible(table, upvalue, master)
+        if master then
+            recursive_visible({ master = master, table }, upvalue);
+            return;
+        end;
+
         local master = table.master or master;
         local upvalue = upvalue == nil and true or upvalue;
 
@@ -99,6 +109,7 @@ local ui = {}; do
     local function connect(element, connections, is_active)
         depend_list[#depend_list + 1] = function()
             recursive_visible(connections, is_active, element);
+            print('\n');
         end;
     end;
 
@@ -127,15 +138,15 @@ local ui = {}; do
     ---@field name string
     ---@field elements table
     ---@field location string
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: true): c_tab, check_box_t
-    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: false): check_box_t, nil
-    ---@field button fun(self: c_tab, label: string, fn: function): button_t
-    ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean): color_picker_t
-    ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number): combo_box_t
-    ---@field keybind fun(self: c_tab, label: string, show_label?: boolean, key?: number, type?: number, display_in_list?: boolean): key_bind_t
-    ---@field multicombo fun(self: c_tab, label: string, items: string[], default_value?: number[]): multi_combo_box_t
-    ---@field slider_int fun(self: c_tab, label: string, min: number, max: number, default_value?: number): slider_int_t
-    ---@field slider_float fun(self: c_tab, label: string, min: number, max: number, default_value?: number): slider_float_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: true, location?: string): c_tab, check_box_t
+    ---@field switch fun(self: c_tab, label: string, default_value?: boolean, is_group?: false, location?: string): check_box_t, nil
+    ---@field button fun(self: c_tab, label: string, fn: function, location?: string): button_t
+    ---@field color fun(self: c_tab, label: string, default_value?: color_t, show_label?: boolean, show_alpha?: boolean, location?: string): color_picker_t
+    ---@field combo fun(self: c_tab, label: string, items: string[], default_value?: number, location?: string): combo_box_t
+    ---@field keybind fun(self: c_tab, label: string, show_label?: boolean, key?: number, type?: number, display_in_list?: boolean, location?: string): key_bind_t
+    ---@field multicombo fun(self: c_tab, label: string, items: string[], default_value?: number[], location?: string): multi_combo_box_t
+    ---@field slider_int fun(self: c_tab, label: string, min: number, max: number, default_value?: number, location?: string): slider_int_t
+    ---@field slider_float fun(self: c_tab, label: string, min: number, max: number, default_value?: number, location?: string): slider_float_t
     local c_tab = {}; do
         ---@private
         function c_tab:new(name, location)
@@ -148,15 +159,16 @@ local ui = {}; do
             return instance;
         end;
 
-        function c_tab:switch(label, default_value, is_group)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:switch(label, default_value, is_group, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             local path_label = string.format('%s##%d', label, hashed_path);
-            local context = is_group and string.format('%s %s group', self.location, path_label) or nil;
+            local context = is_group and string.format('%s %s group', location, path_label) or nil;
             local shown_label = string.format('%s%s##%d', label, (is_group and ' [  ]' or ''), hashed_path);
 
-            local element = menu.add_check_box(shown_label, self.location, default_value, context);
+            local element = menu.add_check_box(shown_label, location, default_value, context);
             self.elements[#self.elements + 1] = element;
 
             if is_group then
@@ -167,77 +179,84 @@ local ui = {}; do
         end;
 
         function c_tab:button(label, fn)
-            local path = string.format('%s/%s', self.location, label);
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_button(label, self.location, fn or function() end);
+            local element = menu.add_button(label, location, fn or function() end);
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:color(label, default_value, show_label, show_alpha)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:color(label, default_value, show_label, show_alpha, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_color_picker(label, self.location, show_label, show_alpha, default_value);
+            local element = menu.add_color_picker(label, location, show_label, show_alpha, default_value);
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:combo(label, items, default_value)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:combo(label, items, default_value, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_combo_box(label, self.location, items, default_value);
+            local element = menu.add_combo_box(label, location, items, default_value);
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:keybind(label, show_label, key, type, display_in_list)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:keybind(label, show_label, key, type, display_in_list, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_key_bind(label, self.location, show_label, key, type, display_in_list);
+            local element = menu.add_key_bind(label, location, show_label, key, type, display_in_list);
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:multicombo(label, items, default_value)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:multicombo(label, items, default_value, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_multi_combo_box(label, self.location, items, default_value or {});
+            local element = menu.add_multi_combo_box(label, location, items, default_value or {});
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:slider_int(label, min, max, default_value)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:slider_int(label, min, max, default_value, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_slider_int(label, self.location, min, max, default_value);
+            local element = menu.add_slider_int(label, location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 
             return element;
         end;
 
-        function c_tab:slider_float(label, min, max, default_value)
-            local path = string.format('%s/%s', self.location, label);
+        function c_tab:slider_float(label, min, max, default_value, location)
+            local location = location or self.location;
+            local path = string.format('%s/%s', location, label);
             local hashed_path = get_hashed_path(path);
 
             label = string.format('%s##%d', label, hashed_path);
-            local element = menu.add_slider_float(label, self.location, min, max, default_value);
+            local element = menu.add_slider_float(label, location, min, max, default_value);
             self.elements[#self.elements + 1] = element;
 
             return element;

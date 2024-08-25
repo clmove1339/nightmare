@@ -421,7 +421,7 @@ end);
 
 test.new('ui.connect', function()
     local ui = require('libs.ui');
-    local handle = ui.create('Aimbot');
+    local handle = ui.create('A');
 
     local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER');
     local resolver_type = handle:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
@@ -467,8 +467,6 @@ test.new('ui.connect', function()
             }
         }
     });
-
-    ui.delete('Aimbot');
 
     return true;
 end);

@@ -32,7 +32,7 @@ end;
 local antiaim = {}; do
     ---@private
     local handle = ui.create('Anti-aimbot');
-    local enable = handle:switch('Enabled'); -- Ебаный сын никсера блять
+    local enable = handle:switch('Enabled');
     local sub_handle = handle:combo('Anti-aimbot part:', { 'General', 'Settings' });
 
     sub_handle:depend({ { enable, true } });
@@ -65,9 +65,10 @@ local antiaim = {}; do
             return states[1];
         end;
 
+        local velocity = me:get_velocity();
         local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
         local duck_amount = ffi.cast('int*', me[netvars.m_flDuckAmount])[0];
-        local speed = math.sqrt(cmd.forwardmove ^ 2 + cmd.sidemove ^ 2);
+        local speed = math.sqrt(velocity.x ^ 2 + velocity.y ^ 2);
 
         local in_crouch = duck_amount > 0;
         local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
@@ -83,10 +84,10 @@ local antiaim = {}; do
         end;
 
         if in_crouch then
-            return states[speed > 1.5 and 6 or 5];
+            return states[speed > 2 and 6 or 5];
         end;
 
-        if speed > 1.5 then
+        if speed > 2 then
             return states[in_speed and 4 or 3];
         end;
 
@@ -101,7 +102,7 @@ local antiaim = {}; do
         state_selector:depend({ { enable, true }, { sub_handle, 1 } });
 
         local function setup_state(state, index)
-            local state_info = {
+            local info = {
                 override = handle:switch('Override ' .. state, state == 'Default'),
                 pitch = handle:combo('Pitch##' .. state, { 'None', 'Down', 'Fake down', 'Fake up' }, 1),
                 base_yaw = handle:combo('Base yaw##' .. state, { 'Local view', 'Static', 'At targets' }, 2),
@@ -109,10 +110,13 @@ local antiaim = {}; do
                 yaw_modifier = handle:combo('Yaw modifier##' .. state, { 'None', 'Center', 'Offset', 'Random', '3-Way', '5-Way' }, 0),
                 yaw_modifier_offset = handle:slider_int('Yaw modifier offset##' .. state, -180, 180, 0),
                 yaw_desync = handle:combo('Yaw desync##' .. state, { 'None', 'Static', 'Jitter', 'Random Jitter' }),
-                yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0)
+                yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0),
+                enable_fakelag = handle:switch('Enable fakelag##' .. state, false, false, 'Movement/Fakelag'),
+                fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random' }, nil, 'Movement/Fakelag'),
+                fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
             };
 
-            for element_name, element in pairs(state_info) do
+            for element_name, element in pairs(info) do
                 local is_default_state = state == 'Default';
                 local is_override_checkbox = element_name == 'override';
 
@@ -121,11 +125,37 @@ local antiaim = {}; do
                     { state_selector, index - 1 },
                     { sub_handle,     1 },
                     not (is_default_state and is_override_checkbox),
-                    (is_default_state or is_override_checkbox) and true or { state_info.override, true },
+                    (is_default_state or is_override_checkbox) and true or { info.override, true },
                 });
             end;
 
-            information[state] = state_info;
+            --[[ На будущее
+            state_selector:connect({
+                [index] = {
+                    info.override,
+                    info.pitch,
+                    info.base_yaw,
+                    info.yaw_offset,
+                    {
+                        master = info.yaw_modifier,
+                        yaw_modifier = info.yaw_modifier,
+                        yaw_modifier_offset = info.yaw_modifier_offset,
+                    },
+                    {
+                        master = info.yaw_desync,
+                        yaw_desync_length = info.yaw_desync_length,
+                    },
+                    {
+                        master = info.enable_fakelag,
+                        {
+                            master = info.fakelag_type,
+                            fakelag_limit = info.fakelag_limit
+                        }
+                    }
+                }
+            }); ]]
+
+            information[state] = info;
         end;
 
         for i, state in ipairs(states) do
@@ -134,9 +164,6 @@ local antiaim = {}; do
 
         local base_path = 'Movement/Anti aim';
 
-        -- я для чего nixware таблицу делал пидор?
-        -- чтобы ты опять взял и пукнул в код жиденько?
-        -- неоЖИДанно и СВОевременно
         local nixware_elements = {
             pitch = menu.find_combo_box('Pitch', base_path),
             base_yaw = menu.find_combo_box('Base yaw', base_path),
@@ -146,6 +173,85 @@ local antiaim = {}; do
             yaw_desync = menu.find_combo_box('Yaw desync', base_path),
             yaw_desync_length = menu.find_slider_int('Yaw desync length', base_path),
         };
+
+        antiaim.fakelag = {}; do
+            local cache = {};
+            local server_origin = vec3_t.new(0, 0, 0);
+
+            ---@param state table
+            ---@param cmd user_cmd_t
+            antiaim.fakelag.handle = function(state, cmd)
+                local me = entitylist.get_local_player();
+                if not me then
+                    return;
+                end;
+
+                nixware['Movement']['Fakelag'].limit:set(0); -- Никсер соси мою сраку
+
+                if not state.enable_fakelag:get() then
+                    cmd.send_packet = true;
+                    return;
+                end;
+
+                local type = state.fakelag_type:get();
+                local limit = state.fakelag_limit:get();
+
+                local choked = globals.choked_commands;
+
+                if type == 0 then
+                    cmd.send_packet = true;
+                elseif type == 1 then
+                    cmd.send_packet = choked >= limit;
+                elseif type == 2 then
+                    if cache[1] then
+                        local bSendPacket = choked >= math.floor(.5 + limit / 2);
+                        cmd.send_packet = bSendPacket;
+                        cache[1] = not bSendPacket;
+                    else
+                        local bSendPacket = choked >= limit;
+                        cmd.send_packet = bSendPacket;
+                        cache[1] = bSendPacket;
+                    end;
+                elseif type == 3 then
+                    local velocity = me:get_velocity();
+                    local speed = math.sqrt(velocity.x ^ 2 + velocity.y ^ 2 + velocity.z ^ 2);
+                    local speed_per_tick = speed * globals.interval_per_tick;
+                    local lag_for_lc = math.floor(64 / speed_per_tick) + 2;
+
+                    if lag_for_lc > 16 then
+                        cmd.send_packet = choked >= limit;
+                    else
+                        cmd.send_packet = choked >= lag_for_lc;
+                    end;
+                elseif type == 4 then
+                    if not cache[2] then
+                        cache[2] = math.random(limit, 15);
+                    end;
+
+                    local bSendPacket = choked >= cache[2];
+
+                    cmd.send_packet = bSendPacket;
+
+                    if bSendPacket then
+                        cache[2] = math.random(limit, 15);
+                    end;
+                end;
+
+                if cmd.send_packet then
+                    local origin = me:get_origin();
+                    local dx, dy, dz = origin.x - server_origin.x, origin.y - server_origin.y, origin.z - server_origin.z;
+                    local distance = math.sqrt(dx ^ 2 + dy ^ 2 + dz ^ 2);
+
+                    if _DEV then
+                        printf('lc: %s', distance > 64);
+                        printf('distance: %.2f', distance);
+                        printf('choked: %d\n', globals.choked_commands);
+                    end;
+
+                    server_origin = vec3_t.new(origin.x, origin.y, origin.z);
+                end;
+            end;
+        end;
 
         local native_enabled = nixware['Movement']['Anti aim'].enabled:get();
 
@@ -158,13 +264,11 @@ local antiaim = {}; do
 
             local settings = information[state];
 
-            -- Тут кароче пастроем бальшо функцый для лэгит аа
-
             for name, element in pairs(nixware_elements) do
-                -- Теперь идет обработка только чит элементов
-                -- То есть если добавить свои, то он не будет пытаться их искать в чит элементах
                 element:set(settings[name]:get());
             end;
+
+            antiaim.fakelag.handle(settings, cmd);
         end;
 
         register_callback('create_move', function(cmd)
