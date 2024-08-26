@@ -131,5 +131,11 @@ return {
     }),
     new_phrase({
         'killed by: ', 'by banan', 'by sqwat', 'by clmove', 'by seizex'
+    }),
+    new_phrase({
+        '1', 'оттарабанен by metamod.cc', 'ой то есть by nightmare.lua'
+    }, { headshot = true }),
+    new_phrase({
+        'ДО СЛОБОДЫ ДОЕДУ???', 'Автобус идет до слободы',
     })
 };
