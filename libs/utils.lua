@@ -1,16 +1,6 @@
 local memory = require 'libs.memory';
 
 local utils = {}; do
-    ---@private
-    local ISurface = memory:interface('vguimatsurface', 'VGUI_Surface031', {
-        SurfaceGetCursorPos = { 100, 'unsigned int(__thiscall*)(void *thisptr, int &x, int &y)' }
-    });
-
-    local IEngineSound = memory:interface('engine.dll', 'IEngineSoundClient003', {
-        EmitAmbientSound = { 12, 'int(__thiscall*)(void*, const char*, float, int, int, float)' },
-        StopSoundByGuid = { 17, 'void(__thiscall*)(void*, int, bool)' },
-    });
-
     ---@public
     function utils:get_cursor_position()
         local x, y = ffi.new('int[1]'), ffi.new('int[1]');

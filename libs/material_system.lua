@@ -1,5 +1,4 @@
 local memory = require 'libs.memory';
-require 'libs.interfaces';
 
 ---@class CMaterial
 ---@field this IMaterial
