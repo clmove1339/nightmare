@@ -13,6 +13,7 @@ require 'libs.enums';
 require 'libs.global';
 require 'libs.entity';
 
+local defensive = require 'libs.defensive';
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
 local ui = require 'libs.ui';
