@@ -13,8 +13,8 @@ end;
 --#region: Libraries
 require 'libs.enums';
 require 'libs.global';
-require 'libs.entity';
 require 'libs.interfaces';
+require 'libs.entity';
 
 local defensive = require 'libs.defensive';
 local timers = require 'libs.timers';
@@ -157,11 +157,20 @@ local antiaim = {}; do
             static = handle:switch('Use static on manual'),
         };
 
-        features:depend({ { enable, true }, { sub_handle, 0 } });
-        manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- Храни аллаха
+        enable:connect({
+            master = sub_handle,
+            [1] = {
+                master = features,
+                [2] = manual
+            }
+        }, true);
+
+        -- features:depend({ { enable, true }, { sub_handle, 0 } });
+        -- manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
