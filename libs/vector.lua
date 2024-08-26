@@ -2,8 +2,17 @@
 -- Кто нибудь вставьте или напишите эту либу сюда
 -- я не знаю нуу вроде вот, добавьте нужные методы, если их тут нет
 -- upd: БАНАН НАПИШИ ТАЙПИНГИ, ОНО ПОЧЕМУ-ТО НЕ ВИДИТ ТО ЧТО У ЕБУЧЕГО vec3_t ПОЯВИЛСЯ :length() и т.д.
+-- upd: ГОТОВО БОСС
 
--- region vector2
+--#region: vec2_t
+---@diagnostic disable-next-line: circle-doc-class
+---@class vec2_t: vec2_t
+---@operator add: vec2_t
+---@operator sub: vec2_t
+---@operator mul: vec2_t
+---@operator div: vec2_t
+---@operator unm: vec2_t
+---@operator concat: string
 
 function vec2_t:unpack()
     return self.x, self.y;
@@ -53,9 +62,25 @@ function vec2_t:__unm()
     return self * -1;
 end;
 
---endregion
+--#endregion
 
--- region vector3
+--#region: vec3_t
+---@diagnostic disable-next-line: circle-doc-class
+---@class vec3_t: vec3_t
+---@operator add: vec3_t
+---@operator sub: vec3_t
+---@operator mul: vec3_t
+---@operator div: vec3_t
+---@operator unm: vec3_t
+---@operator concat: string
+---@field normalize fun(self: vec3_t): vec3_t Returns the normalized vector (a vector with the same direction but a length of 1)
+---@field length2d fun(self: vec3_t): number Returns the length of the vector in 2D (using only the X and Y components).
+---@field length fun(self: vec3_t): number  Returns the length of the vector in 3D (considering all three components: X, Y, Z).
+---@field to_angle fun(self: vec3_t): angle_t  Converts the vector into an angle (useful for systems dealing with rotations).
+---@field angle_to fun(self: vec3_t, vector: vec3_t): angle_t Returns the angle between this vector and another vector.
+---@field forward fun(self: vec3_t): vec3_t Returns the normalized vector representing the direction of this vector.
+---@field angles fun(pitch: number, yaw: number): vec3_t Creates a vector from the given angles (pitch - vertical angle, yaw - horizontal angle).
+---@field dist fun(self: vec3_t, vector: vec3_t): number Returns the distance between this vector and another vector.
 
 function vec3_t:unpack()
     return self.x, self.y, self.z;
@@ -113,6 +138,10 @@ function vec3_t:length()
     return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
 end;
 
+function vec3_t:normalize()
+    return self / self:length();
+end;
+
 function vec3_t:to_angle()
     local pitch = math.deg(math.atan2(-self.z, math.sqrt(self.x * self.x + self.y * self.y)));
     local yaw = math.deg(math.atan2(self.y, self.x));
@@ -153,8 +182,8 @@ function vec3_t.angles(pitch, yaw)
     return vec3_t.new(cp * cy, cp * sy, -sp);
 end;
 
-function vec3_t:distance_to(vector)
+function vec3_t:dist(vector)
     return (self - vector):length();
 end;
 
--- endregion
+--#endregion
