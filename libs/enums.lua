@@ -10,9 +10,11 @@ netvars = {
     m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
     m_vecVelocity = engine.get_netvar_offset('DT_BasePlayer', 'm_vecVelocity[0]'),
     m_hGroundEntity = engine.get_netvar_offset('DT_BasePlayer', 'm_hGroundEntity'),
-    m_nTickBase = engine.get_netvar_offset('DT_BaseEntity', 'm_nTickBase')
+    m_nTickBase = engine.get_netvar_offset('DT_BasePlayer', 'm_nTickBase'),
+    m_iTeamNum = engine.get_netvar_offset('DT_BaseEntity', 'm_iTeamNum'),
 };
 
+---@enum FrameStages
 FrameStages = {
     FRAME_UNDEFINED = -1,
     FRAME_START = 0,

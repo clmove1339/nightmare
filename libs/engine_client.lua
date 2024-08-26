@@ -1,6 +1,6 @@
 local memory = require 'libs.memory';
 
----@class INetChannelInfo : class_t
+---@class INetChannelInfo
 ---@field GetName fun(self: INetChannelInfo): string;
 ---@field GetAddress fun(self: INetChannelInfo): string;
 ---@field GetTime fun(self: INetChannelInfo): number;

@@ -65,7 +65,6 @@ IVModelRender:attach(21, 'void(__thiscall*)(void*, void*, void*, const ModelRend
         local model_name = ffi.string(info.pModel.szName);
     end, print);
 
-
     if (not draw_original) then
         return;
     end;

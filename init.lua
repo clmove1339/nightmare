@@ -1,3 +1,4 @@
+--#region: package.path
 do
     local get_csgo_folder = function()
         local source = debug.getinfo(1, 'S').source:sub(2, -1);
@@ -8,11 +9,12 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?.lua;', csgo_folder);
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
-
+--#endregion
+--#region: Libraries
 require 'libs.enums';
 require 'libs.global';
 require 'libs.entity';
-require 'libs.dme';
+require 'libs.interfaces';
 
 local defensive = require 'libs.defensive';
 local timers = require 'libs.timers';
@@ -22,7 +24,9 @@ local utils = require 'libs.utils';
 local engine_client = require 'libs.engine_client';
 local vmt = require 'libs.vmt';
 local inspect = require 'libs.inspect';
-
+local materials = require 'libs.material_system';
+--#endregion
+--#region: Main
 local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
@@ -38,37 +42,42 @@ local aimbot = {}; do
 
         function jump_scout:threat_hittable()
             local me = entitylist.get_local_player();
-            if not me then return false; end;
+            if not me then
+                return false;
+            end;
 
-            local hittable = false;
+            local my_origin = me:get_origin();
+            local my_team = me:get_team();
 
             local entities = entitylist.get_entities('CCSPlayer', false);
+
             for i = 1, #entities do
                 local player = entities[i];
-                local team = ffi.cast('int*', me[netvars.m_iTeamNum])[0];
-                local player_team = ffi.cast('int*', player[netvars.m_iTeamNum])[0];
+                if player and player:is_alive() then
+                    local player_team = player:get_team();
+                    local is_enemy = team ~= player_team;
 
-                if player and player:is_alive() and player:is_visible() and team ~= player_team then
-                    local distance = me:get_origin():dist(player:get_origin());
+                    if player:is_visible() and is_enemy then
+                        local distance = my_origin:dist(player:get_origin());
 
-                    if distance <= 800 + (hitchance:get() * 2) then
-                        hittable = true;
+                        if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
+                            return true;
+                        end;
                     end;
                 end;
             end;
 
-            return hittable;
+            return false;
         end;
 
         function jump_scout:on_create_move()
             local me = entitylist.get_local_player();
 
-            if me == nil or not me:is_alive() then
+            if not (me and me:is_alive()) then
                 return;
             end;
 
             local hitchance = menu.aimbot.jump_scout_hitchance:get();
-
             local weapon = me:get_active_weapon();
 
             if weapon ~= nil then
@@ -555,12 +564,6 @@ local misc = {}; do
 end;
 
 local skinchanger = {}; do
-    --#region: Ponos deda
-    local IClientEntityList = memory:interface('client', 'VClientEntityList003', {
-        GetClientEntity = { 3, 'uintptr_t(__thiscall*)(void*, int)' },
-        GetClientEntityFromHandle = { 4, 'uintptr_t(__thiscall*)(void*, uintptr_t)' }
-    });
-
     local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
     local weapon_data = require 'libs.weapon_skins';
@@ -643,8 +646,6 @@ local skinchanger = {}; do
     for i, v in ipairs(weapon_names) do
         weapon2index[v] = i - 1;
     end;
-
-    --#endregion
 
     local handle = ui.create('Skinchanger');
 
@@ -938,3 +939,4 @@ local skinchanger = {}; do
         end);
     end;
 end;
+--#endregion

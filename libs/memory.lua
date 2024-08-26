@@ -80,19 +80,18 @@ local memory = {}; do
         return nil;
     end;
 
-    ---@generic T
+    ---@generic T: class_t
     ---@param fns T
-    ---@return class_t|T
+    ---@return T
     function memory:class(fns)
         return class:new(fns);
     end;
 
-    ---@generic T
-    ---@param self any
+    ---@generic T: class_t
     ---@param module string
     ---@param name string
     ---@param fns T
-    ---@return class_t|T
+    ---@return T
     function memory:interface(module, name, fns)
         local ptr = self:create_interface(module, name);
         assert(ptr, 'failed to create interface');
@@ -100,6 +99,9 @@ local memory = {}; do
         return self:class(fns)(ptr);
     end;
 
+    ---@param arg string|number
+    ---@param ... unknown
+    ---@return function?
     function memory:get_vfunc(arg, ...)
         if (type(arg) == 'number') then
             return vtable_thunk(arg, ...);
