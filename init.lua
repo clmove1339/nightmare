@@ -978,6 +978,4 @@ local skinchanger = {}; do
     end;
 end;
 
--- --#endregion
-
-require 'dme';
+--#endregion
