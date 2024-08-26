@@ -12,6 +12,7 @@ end;
 require 'libs.enums';
 require 'libs.global';
 require 'libs.entity';
+require 'libs.dme';
 
 local defensive = require 'libs.defensive';
 local timers = require 'libs.timers';
@@ -27,6 +28,8 @@ local aimbot = {}; do
     local handle = ui.create('Aimbot');
 
     local jump_scout = {}; do
+        -- где нах :get_active_weapon и :is_visible
+        -- когда добавите тогда почешем яйца
         local group, enable = handle:switch('Jump scout', nil, true);
 
         local auto_stop = group:switch('Auto stop', true, false);
@@ -44,7 +47,6 @@ local aimbot = {}; do
                 local player = entities[i];
                 local team = ffi.cast('int*', me[netvars.m_iTeamNum])[0];
                 local player_team = ffi.cast('int*', player[netvars.m_iTeamNum])[0];
-
 
                 if player and player:is_alive() and player:is_visible() and team ~= player_team then
                     local distance = me:get_origin():dist(player:get_origin());
@@ -936,6 +938,3 @@ local skinchanger = {}; do
         end);
     end;
 end;
-
-
-require 'dme';

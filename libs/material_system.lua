@@ -1,3 +1,5 @@
+-- Эта материал система просто поражает
+
 local memory = require 'libs.memory';
 
 local IMaterialSystem = memory:interface('engine.dll', 'VEngineRenderView', {
