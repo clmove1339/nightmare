@@ -25,8 +25,84 @@ local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
 
-    local custom_resolver = handle:switch('ENABLE CUSTOM_RESOZOLVER', nil, true);
-    local resolver_type = custom_resolver:combo('Resolver Type', { 'Off', 'Default', 'Extended' });
+    local jump_scout = {}; do
+        local group, enable = handle:switch('Jump scout', nil, true);
+
+        local auto_stop = group:switch('Auto stop', true, false);
+        local hitchance = group:slider_int('Hit chance', 0, 100, 55);
+        local min_damage = group:slider_int('Min damage', 1, 120, nixware['Ragebot']['Target']['Scout'].min_damage:get());
+
+        function jump_scout:threat_hittable()
+            local me = entitylist.get_local_player();
+            if not me then return false; end;
+
+            local hittable = false;
+
+            local entities = entitylist.get_entities('CCSPlayer', false);
+            for i = 1, #entities do
+                local player = entities[i];
+                local team = ffi.cast('int*', me[netvars.m_iTeamNum])[0];
+                local player_team = ffi.cast('int*', player[netvars.m_iTeamNum])[0];
+
+
+                if player and player:is_alive() and player:is_visible() and team ~= player_team then
+                    local distance = me:get_origin():distance_to(player:get_origin());
+
+                    if distance <= 800 + (hitchance:get() * 2) then
+                        hittable = true;
+                    end;
+                end;
+            end;
+
+            return hittable;
+        end;
+
+        function jump_scout:on_create_move()
+            local me = entitylist.get_local_player();
+
+            if me == nil or not me:is_alive() then
+                return;
+            end;
+
+            local hitchance = menu.aimbot.jump_scout_hitchance:get();
+
+            local weapon = me:get_active_weapon();
+
+            if weapon ~= nil then
+                local networkable = ffi.cast('uintptr_t*', weapon + 8)[0];
+                local clientclass = ffi.cast('struct ClientClass*', ffi.cast('uintptr_t*', ffi.cast('uintptr_t*', networkable + 2 * 4)[0] + 1)[0]);
+                local network_name = ffi.string(clientclass.network_name);
+
+                if not network_name:find('SSG08') then
+                    return;
+                end;
+
+                local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
+                local in_air = bit.band(cmd.buttons, enum.buttons.in_jump) == enum.buttons.in_jump or bit.band(flags, enum.flags.onground) == 0;
+
+                local active = menu.aimbot.jump_scout:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+
+                ui.find_check_box('Auto strafer [  ]', 'Movement/Movement'):set(not active);
+
+                if active and not ui.is_visible() then
+                    if not jump_scout.cache.active then
+                        jump_scout.cache.value = scout_hitchance:get();
+                        jump_scout.cache.active = true;
+                    end;
+
+                    scout_hitchance:set(hitchance);
+                    fast_stop:stop(cmd);
+                elseif jump_scout.cache.active then
+                    scout_hitchance:set(jump_scout.cache.value);
+                    jump_scout.cache.active = false;
+                end;
+            end;
+        end;
+
+        register_callback('create_move', function()
+            xpcall(jump_scout.on_create_move, print, jump_scout);
+        end);
+    end;
 end;
 
 local antiaim = {}; do

@@ -65,11 +65,11 @@ local ui = {}; do
                 data.overrided = true;
             end;
 
-            element:set(index, value);
+            element:set(unpack({ value, index }));
         else
             if overrided then
                 local value = data.old_value;
-                element:set(index, value);
+                element:set(unpack({ value, index }));
                 data.overrided = false;
             end;
         end;
