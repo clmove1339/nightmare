@@ -47,7 +47,7 @@ local aimbot = {}; do
 
 
                 if player and player:is_alive() and player:is_visible() and team ~= player_team then
-                    local distance = me:get_origin():distance_to(player:get_origin());
+                    local distance = me:get_origin():dist(player:get_origin());
 
                     if distance <= 800 + (hitchance:get() * 2) then
                         hittable = true;
