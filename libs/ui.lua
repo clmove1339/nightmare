@@ -93,14 +93,13 @@ local ui = {}; do
         if type == 'base_check_box_t' then
             return element:get();
         elseif type == 'base_combo_box_t' then
-            print(i);
             if is_i_number then
                 return element:get() == i - 1;
             else
                 return element:get() ~= 0;
             end;
         elseif type == 'base_multi_combo_box_t' and is_i_number then
-            return element:get(i);
+            return element:get(i - 1);
         elseif type == 'base_slider_int_t' and is_i_number then
             return element:get() == i;
         elseif type == 'base_slider_float_t' and is_i_number then
@@ -114,20 +113,15 @@ local ui = {}; do
         return false;
     end;
 
-    ---@param table table<string|number, menu_item[]|menu_item>
+    ---@param table table<any, menu_item[]|menu_item>
     ---@param upvalue? boolean
     ---@param master? menu_item
     local function recursive_visible(table, upvalue, master)
-        if master then
-            recursive_visible({ master = master, table }, upvalue);
-            return;
-        end;
-
-        local master = table.master or master;
+        local master = master or table.master;
         local upvalue = upvalue == nil and true or upvalue;
 
         for id, dependant in pairs(table) do
-            local is_master = id == 'master';
+            local is_master = tostring(id):lower() == 'master';
             local is_visible = handle_value(master, id, upvalue);
             local type = typeof(dependant);
 
@@ -141,11 +135,11 @@ local ui = {}; do
 
     ---@param element menu_item
     ---@param connections table
+    ---@param value any
     ---@param is_active boolean
-    local function connect(element, connections, is_active)
+    local function connect(element, connections, value, is_active)
         depend_list[#depend_list + 1] = function()
-            recursive_visible(connections, is_active, element);
-            print('\n');
+            recursive_visible({ [value] = connections }, is_active, element);
         end;
     end;
 
@@ -168,8 +162,9 @@ local ui = {}; do
 
     ---@diagnostic disable-next-line: circle-doc-class
     ---@class menu_item: menu_item
+    ---@field override fun(self: menu_item, value: any, index: integer): {element: menu_item, old_value: any, overrided: boolean}
     ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
-    ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
+    ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>, value?: any): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 
     ---@class c_tab : menu_item
     ---@field name string
