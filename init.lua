@@ -55,7 +55,7 @@ local aimbot = {}; do
                 local player = entities[i];
                 if player and player:is_alive() then
                     local player_team = player:get_team();
-                    local is_enemy = team ~= player_team;
+                    local is_enemy = my_team ~= player_team;
 
                     if player:is_visible() and is_enemy then
                         local distance = my_origin:dist(player:get_origin());
@@ -70,6 +70,29 @@ local aimbot = {}; do
             return false;
         end;
 
+        function jump_scout:stop(cmd)
+            local me = entitylist.get_local_player();
+
+            if me == nil then
+                return;
+            end;
+
+            local velocity = me:get_velocity();
+            local direction = velocity:to_angle();
+            local speed = velocity:length2d();
+
+            if speed <= 15 then
+                return;
+            end;
+
+            direction.yaw = normalize_yaw(cmd.viewangles.yaw - direction.yaw);
+
+            local negated_direction = direction:forward() * -speed;
+
+            cmd.forwardmove = negated_direction.x;
+            cmd.sidemove = negated_direction.y;
+        end;
+
         function jump_scout:on_create_move()
             local me = entitylist.get_local_player();
 
@@ -77,7 +100,6 @@ local aimbot = {}; do
                 return;
             end;
 
-            local hitchance = menu.aimbot.jump_scout_hitchance:get();
             local weapon = me:get_active_weapon();
 
             if weapon ~= nil then
