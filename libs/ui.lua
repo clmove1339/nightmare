@@ -41,6 +41,42 @@ local ui = {}; do
         end;
     end;
 
+    local override_list = {};
+
+    local function override(self, value, index)
+        local element = self;
+        local name = element;
+
+        if override_list[name] == nil then
+            override_list[name] = {
+                element = element,
+                old_value = nil,
+                overrided = false,
+            };
+        end;
+
+        local data = override_list[name];
+        local overrided = data.overrided;
+
+        if not menu.is_visible() and value ~= nil then
+            if not overrided then
+                data.old_value = self:get(index);
+
+                data.overrided = true;
+            end;
+
+            element:set(unpack({ value, index }));
+        else
+            if overrided then
+                local value = data.old_value;
+                element:set(unpack({ value, index }));
+                data.overrided = false;
+            end;
+        end;
+
+        return data;
+    end;
+
     ---@param element any
     ---@param i? any
     ---@param upvalue? boolean
@@ -126,6 +162,7 @@ local ui = {}; do
 
     for _, item in pairs(menu_items_list) do
         item.depend = depend;
+        item.override = override;
         item.connect = connect;
     end;
 

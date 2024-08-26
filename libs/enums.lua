@@ -25,6 +25,15 @@ FrameStages = {
 };
 
 nixware = {
+    ['Ragebot'] = {
+        ['Target'] = {
+            ['Scout'] = {
+                hit_chance = menu.find_slider_int('Hit chance', 'Ragebot/Target/Scout'),
+                auto_stop = menu.find_slider_int('Auto stop', 'Ragebot/Target/Scout'),
+                min_damage = menu.find_slider_int('Min damage', 'Ragebot/Target/Scout'),
+            }
+        }
+    },
     ['Movement'] = {
         ['Anti aim'] = {
             enabled = menu.find_check_box('Enabled', 'Movement/Anti aim'),
