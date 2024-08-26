@@ -2,8 +2,8 @@
 
 local memory = require 'libs.memory';
 
-local IMaterialSystem = memory:interface('engine.dll', 'VEngineRenderView', {
-
+local IMaterial = memory:class({
+    -- fns
 });
 
 local material_c = {}; do
@@ -11,7 +11,9 @@ local material_c = {}; do
 end;
 
 local material_system = {}; do
-
+    local function init(material)
+        return setmetatable({ this = IMaterial(material) }, material_c);
+    end;
 end;
 
 return material_system;
