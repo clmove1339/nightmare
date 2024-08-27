@@ -53,34 +53,6 @@ function entity_t:get_eye_position()
     return self:get_origin() + vec3_t.new(m_vecViewOffset[0], m_vecViewOffset[1], m_vecViewOffset[2]);
 end;
 
----Checks whether the entity can be seen by the target
----@param target entity_t
----@return boolean
-function entity_t:is_visible(target)
-    if not (target and target:is_alive()) then
-        return false;
-    end;
-
-    local mask = 0x46004003;
-    local view_origin = target:get_eye_position();
-
-    for i = 0, 18 do
-        local origin = self:get_hitbox_position(i);
-
-        if origin then
-            local trace = engine.trace_line(view_origin, origin, target, mask);
-
-            if trace.fraction > .9 then
-                return true;
-            end;
-        end;
-    end;
-
-    return false;
-end;
-
--- region entity
-
 local StudioHitboxSet = ffi.typeof('StudioHitboxSet*');
 local StudioBbox = ffi.typeof('StudioBbox*');
 local native_get_poseparams = ffi.cast('pose_parameters_t*(__thiscall*)(void*, int)', find_pattern('client.dll', '55 8B EC 8B 45 08 57 8B F9 8B 4F 04 85 C9 75 15'));
@@ -155,8 +127,12 @@ local function vector_transform(vector, matrix)
 end;
 
 function entity_t:get_hitbox_position(hitbox_index)
-    local hitboxStudioBbox = self:get_hitbox_studio_bbox({ hitbox_index })[hitbox_index];
+    local hitboxStudioBbox = self:get_hitbox_studio_bbox({ hitbox_index });
+    if not hitboxStudioBbox then
+        return;
+    end;
 
+    hitboxStudioBbox = hitboxStudioBbox[hitbox_index];
     local boneMatrix = self:get_bone_matrix(hitboxStudioBbox.bone);
 
     if boneMatrix == nil then
@@ -169,4 +145,28 @@ function entity_t:get_hitbox_position(hitbox_index)
     return center;
 end;
 
--- endregion
+---Checks whether the entity can be seen by the target
+---@param target entity_t
+---@return boolean
+function entity_t:is_visible(target)
+    if not (target and target:is_alive()) then
+        return false;
+    end;
+
+    local mask = 0x46004003;
+    local view_origin = target:get_eye_position();
+
+    for i = 0, 18 do
+        local origin = self:get_hitbox_position(i);
+
+        if origin then
+            local trace = engine.trace_line(view_origin, origin, target, mask);
+
+            if trace.fraction > .9 then
+                return true;
+            end;
+        end;
+    end;
+
+    return false;
+end;

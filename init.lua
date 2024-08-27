@@ -70,16 +70,15 @@ local aimbot = {}; do
                 if player and player:is_alive() then
                     local player_team = player:get_team();
                     local is_enemy = my_team ~= player_team;
+                    local is_spectator = player_team == 0;
 
-                    player:is_visible(me);
+                    if not is_spectator and is_enemy and player:is_visible(me) then
+                        local distance = my_origin:dist(player:get_origin());
 
-                    -- if is_enemy and player:is_visible(me) then
-                    --     local distance = my_origin:dist(player:get_origin());
-
-                    --     if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
-                    --         return true;
-                    --     end;
-                    -- end;
+                        if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
+                            return true;
+                        end;
+                    end;
                 end;
             end;
 
@@ -131,20 +130,18 @@ local aimbot = {}; do
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
                 local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
 
-                self:threat_hittable();
+                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
-                -- local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                if active then
+                    nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
+                    nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
 
-                -- if active then
-                --     nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
-                --     nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
-
-                --     if auto_stop:get() then
-                --         nixware['Movement']['Movement'].auto_strafer:override(false);
-                --         nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
-                --         self:stop(cmd);
-                --     end;
-                -- end;
+                    if auto_stop:get() then
+                        nixware['Movement']['Movement'].auto_strafer:override(false);
+                        nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
+                        self:stop(cmd);
+                    end;
+                end;
             end;
         end;
 
