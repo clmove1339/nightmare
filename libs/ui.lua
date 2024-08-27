@@ -41,8 +41,13 @@ local ui = {}; do
         end;
     end;
 
+    ---@type table<menu_item, {element: menu_item, old_value: any, overrided: boolean}>
     local override_list = {};
 
+    ---@param self menu_item
+    ---@param value any
+    ---@param index integer
+    ---@return { element: menu_item, old_value: any, overrided: boolean }
     local function override(self, value, index)
         local element = self;
         local name = element;
