@@ -137,8 +137,16 @@ function vec3_t:length2d()
     return math.sqrt(self.x * self.x + self.y * self.y);
 end;
 
+function vec3_t:length2d_sqr()
+    return self.x * self.x + self.y * self.y;
+end;
+
 function vec3_t:length()
     return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
+end;
+
+function vec3_t:length_sqr()
+    return self.x * self.x + self.y * self.y + self.z * self.z;
 end;
 
 function vec3_t:normalize()
@@ -183,6 +191,10 @@ function vec3_t.angles(pitch, yaw)
     local cy, sy = math.cos(ry), math.sin(ry);
 
     return vec3_t.new(cp * cy, cp * sy, -sp);
+end;
+
+function vec3_t:dot(other)
+    return self.x * other.x + self.y * other.y + self.z * other.z;
 end;
 
 function vec3_t:transform(matrix)

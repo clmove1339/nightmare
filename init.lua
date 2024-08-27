@@ -755,6 +755,10 @@ local misc = {}; do
         register_callback('player_death', main);
     end;
 
+    local supertoss = {}; do
+
+    end;
+
     local console_filter; do
         local old_value = cvars.con_filter_enable:get_bool();
         local enable = handle:switch('Enable console filter');
