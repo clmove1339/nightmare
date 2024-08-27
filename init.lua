@@ -610,7 +610,7 @@ local misc = {}; do
 
     local killsay = {}; do
         local class, switch = handle:switch('Killsay', false, true);
-        local CPM = class:slider_int('Characters per minute', 200, 500, 300); -- Characters per minute
+        local CPM = class:slider_int('Characters per minute', 200, 1000, 800); -- Characters per minute
 
         ---@type table<number, {list: string[], flags?: table<boolean?>}>
         local phrases = require 'libs.phrases';
