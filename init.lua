@@ -624,16 +624,21 @@ local misc = {}; do
             end;
 
             local my_index = me:get_index();
+            local attacker_index = attacker:get_index();
 
             if died:get_index() == my_index then
+                if attacker_index == my_index then
+                    return 'on_suicide';
+                else
+                    return 'on_death';
+                end;
+            end;
+
+            if attacker_index ~= my_index then
                 return;
             end;
 
-            if attacker:get_index() ~= my_index then
-                return;
-            end;
-
-            return true;
+            return 'on_kill';
         end;
 
         ---@param event game_event_t
@@ -664,7 +669,7 @@ local misc = {}; do
             return true;
         end;
 
-        local function filter_phrases(event)
+        local function filter_phrases(phrases, event)
             local filtered_phrases = {};
 
             for _, phrase in ipairs(phrases) do
@@ -713,15 +718,17 @@ local misc = {}; do
                 return;
             end;
 
-            if not is_event_valid(event) then
+            local event_type = is_event_valid(event);
+
+            if not event_type then
                 return;
             end;
 
             already_writing = true;
 
-            local valid_phrases = filter_phrases(event);
-            local id = math.random(1, #valid_phrases);
-            local phrase = valid_phrases[id];
+            local filtered_phrases = filter_phrases(phrases[event_type], event);
+            local id = math.random(1, #filtered_phrases);
+            local phrase = filtered_phrases[id];
 
             send_phrase(phrase, id);
         end;
