@@ -155,7 +155,9 @@ local antiaim = {}; do
     local enable = handle:switch('Enabled');
     local sub_handle = handle:combo('Anti-aimbot part:', { 'General', 'Settings' });
 
-    sub_handle:depend({ { enable, true } });
+    enable:connect({
+        sub_handle
+    }, true);
 
     antiaim.general = {}; do
         local features = handle:multicombo('Features', { 'Anti-backstab', 'Manual anti-aim' });
@@ -167,20 +169,17 @@ local antiaim = {}; do
             static = handle:switch('Use static on manual'),
         };
 
-        -- Храни аллаха
-        -- enable:connect({
-        --     master = sub_handle,
-        --     [1] = {
-        --         master = features,
-        --         [2] = manual
-        --     }
-        -- }, true);
+        -- АЛЛАХ ВЕЛИК
+        sub_handle:connect({
+            master = features,
+            [2] = manual
+        }, 1);
 
-        features:depend({ { enable, true }, { sub_handle, 0 } });
-        manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- features:depend({ { enable, true }, { sub_handle, 0 } });
+        -- manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        -- manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
@@ -245,44 +244,45 @@ local antiaim = {}; do
                 fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
             };
 
-            for element_name, element in pairs(info) do
-                local is_default_state = state == 'Default';
-                local is_override_checkbox = element_name == 'override';
+            -- for element_name, element in pairs(info) do
+            --     local is_default_state = state == 'Default';
+            --     local is_override_checkbox = element_name == 'override';
 
-                element:depend({
-                    { enable,         true },
-                    { state_selector, index - 1 },
-                    { sub_handle,     1 },
-                    not (is_default_state and is_override_checkbox),
-                    (is_default_state or is_override_checkbox) and true or { info.override, true },
-                });
-            end;
+            --     element:depend({
+            --         { enable,         true },
+            --         { state_selector, index - 1 },
+            --         { sub_handle,     1 },
+            --         not (is_default_state and is_override_checkbox),
+            --         (is_default_state or is_override_checkbox) and true or { info.override, true },
+            --     });
+            -- end;
 
-            --[[ На будущее
             state_selector:connect({
-                [index] = {
-                    info.override,
-                    info.pitch,
-                    info.base_yaw,
-                    info.yaw_offset,
+                master = info.override,
+                info.pitch,
+                info.base_yaw,
+                info.yaw_offset,
+                {
+                    master = info.yaw_modifier,
+                    yaw_modifier = info.yaw_modifier,
+                    yaw_modifier_offset = info.yaw_modifier_offset,
+                },
+                {
+                    master = info.yaw_desync,
+                    yaw_desync_length = info.yaw_desync_length,
+                },
+                {
+                    master = info.enable_fakelag,
                     {
-                        master = info.yaw_modifier,
-                        yaw_modifier = info.yaw_modifier,
-                        yaw_modifier_offset = info.yaw_modifier_offset,
-                    },
-                    {
-                        master = info.yaw_desync,
-                        yaw_desync_length = info.yaw_desync_length,
-                    },
-                    {
-                        master = info.enable_fakelag,
-                        {
-                            master = info.fakelag_type,
-                            fakelag_limit = info.fakelag_limit
-                        }
+                        master = info.fakelag_type,
+                        fakelag_limit = info.fakelag_limit
                     }
                 }
-            }); ]]
+            }, index);
+
+            if state == 'Default' then
+                info.override:depend({ false });
+            end;
 
             information[state] = info;
         end;
@@ -466,7 +466,7 @@ local visualization = {}; do
         end;
 
         register_callback('paint', function()
-            xpcall(watermark, print);
+            -- xpcall(watermark, print);
         end);
     end;
 

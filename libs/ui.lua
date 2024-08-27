@@ -82,8 +82,6 @@ local ui = {}; do
         return data;
     end;
 
-
-
     ---@param element any
     ---@param i? any
     ---@param upvalue? boolean
@@ -122,10 +120,13 @@ local ui = {}; do
 
     ---@param table table<any, menu_item[]|menu_item>
     ---@param upvalue? boolean
-    ---@param master? menu_item
-    local function recursive_visible(table, upvalue, master)
-        local master = master or table.master;
-        local upvalue = upvalue == nil and true or upvalue;
+    ---@param upmaster? menu_item
+    local function recursive_visible(table, upvalue, upmaster)
+        if upmaster then
+            upvalue = upmaster:is_visible();
+        end;
+
+        local master = upmaster or table.master;
 
         for id, dependant in pairs(table) do
             local is_master = tostring(id):lower() == 'master';
@@ -135,7 +136,9 @@ local ui = {}; do
             if type == 'table' then
                 recursive_visible(dependant, upvalue and is_visible);
             elseif type:find('base_') then
-                dependant:set_visible((is_master and upvalue) or (is_visible and upvalue) or false);
+                if dependant ~= upmaster then
+                    dependant:set_visible((is_master and upvalue) or (is_visible and upvalue) or false);
+                end;
             end;
         end;
     end;
@@ -146,7 +149,7 @@ local ui = {}; do
     ---@param is_active boolean
     local function connect(element, connections, value, is_active)
         depend_list[#depend_list + 1] = function()
-            recursive_visible({ [value] = connections }, is_active, element);
+            recursive_visible({ master = element, [value] = connections }, is_active, element);
         end;
     end;
 
