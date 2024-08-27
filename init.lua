@@ -22,13 +22,16 @@ require 'libs.entity';
 require 'libs.vector';
 require 'libs.render';
 
+local engine_client = require 'libs.engine_client';
 local materials = require 'libs.material_system';
+local animation = require 'libs.animation';
 local defensive = require 'libs.defensive';
 local inspect = require 'libs.inspect';
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
 local utils = require 'libs.utils';
 local vmt = require 'libs.vmt';
+local ui = require 'libs.ui';
 
 --#endregion
 
@@ -426,6 +429,8 @@ local visualization = {}; do
         };
 
         local function watermark()
+            local me = entitylist.get_local_player();
+
             local enabled = master:get(0);
             local alpha = animation:new('watermark_alpha', nil, enabled);
             local margin = 8;
@@ -434,10 +439,12 @@ local visualization = {}; do
             local position = vec2_t.new(screen.x - 500, margin);
             color.a = alpha;
 
-            local netchannel = engine_client:get_net_channel_info();
-            local latency = netchannel:get_latency(0) * 1000;
+            if me and me:is_alive() then
+                local netchannel = engine_client:get_net_channel_info();
+                local latency = (netchannel:get_latency(0)) * 1000;
+            end;
 
-            local text = string.format('%s %s ms %s', get_user_name(), string.format('%.1f', latency), os.date('%I:%M'));
+            local text = string.format('%s %s ms %s', get_user_name(), string.format('%.1f', latency and latency or 0.0), os.date('%I:%M'));
             local icon = 'A';
 
             local measure = {
@@ -458,7 +465,9 @@ local visualization = {}; do
             render.text(font.text[18], position + vec2_t.new(margin, height - measure.text.y - margin), color_t.new(.9, .9, .9, alpha), '', text);
         end;
 
-        register_callback('paint', watermark);
+        register_callback('paint', function()
+            xpcall(watermark, print);
+        end);
     end;
 
     local third_person = {}; do
