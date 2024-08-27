@@ -1,4 +1,6 @@
+--#region: Pre load
 local LOAD_TIME = os.clock();
+--#endregion
 
 --#region: package.path
 
@@ -1144,6 +1146,7 @@ end;
 
 --#endregion
 
+--#region: Post load
 engine.execute_client_cmd('clear');
 utils:play_sound('ui/item_drop.wav');
 printf('welcome back, %s!', get_user_name());
@@ -1152,3 +1155,4 @@ printf('lua fully initialized in %.3f seconds', os.clock() - LOAD_TIME);
 register_callback('unload', function()
     print('bye! ;(');
 end);
+--#endregion
