@@ -143,8 +143,8 @@ local aimbot = {}; do
             end;
         end;
 
-        register_callback('create_move', function()
-            xpcall(jump_scout.on_create_move, print, jump_scout);
+        register_callback('create_move', function(cmd)
+            xpcall(jump_scout.on_create_move, print, jump_scout, cmd);
         end);
     end;
 end;
