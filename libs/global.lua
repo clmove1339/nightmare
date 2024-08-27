@@ -57,6 +57,17 @@ ffi = require 'ffi'; do
         short GetKeyState(int);
 
         typedef struct {
+            char pad[8];
+            float m_flStart;
+            float m_flEnd;
+            float m_flState;
+        } pose_parameters_t;
+
+        typedef struct {
+            float x, y, z;
+        } vector_t;
+
+        typedef struct {
             char pad_0000[4];
             char* ConsoleName;
             char pad_0008[12];
@@ -142,6 +153,44 @@ ffi = require 'ffi'; do
             float flInaccuracyPitchShift;
             float flInaccuracySoundThreshold;
         } weapon_info_t;
+
+                typedef struct {
+            int id;
+            int version;
+            int checksum;
+            char name[64];
+            int length;
+            vector_t eyePosition;
+            vector_t illumPosition;
+            vector_t hullMin;
+            vector_t hullMax;
+            vector_t bbMin;
+            vector_t bbMax;
+            int flags;
+            int numBones;
+            int boneIndex;
+            int numBoneControllers;
+            int boneControllerIndex;
+            int numHitboxSets;
+            int hitboxSetIndex;
+        } StudioHdr;
+
+        typedef struct {
+            int nameIndex;
+            int numHitboxes;
+            int hitboxIndex;
+        } StudioHitboxSet;
+
+        typedef struct {
+            int bone;
+            int group;
+            vector_t bbMin;
+            vector_t bbMax;
+            int hitboxNameIndex;
+            vector_t offsetOrientation;
+            float capsuleRadius;
+            int unused[4];
+        } StudioBbox;
     ]];
 end;
 
