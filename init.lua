@@ -1,4 +1,5 @@
 --#region: package.path
+
 do
     local get_csgo_folder = function()
         local source = debug.getinfo(1, 'S').source:sub(2, -1);
@@ -9,8 +10,11 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?.lua;', csgo_folder);
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
+
 --#endregion
+
 --#region: Libraries
+
 require 'libs.enums';
 require 'libs.global';
 require 'libs.interfaces';
@@ -26,9 +30,12 @@ local engine_client = require 'libs.engine_client';
 local vmt = require 'libs.vmt';
 local inspect = require 'libs.inspect';
 local materials = require 'libs.material_system';
+
 local input = require 'libs.input';
 --#endregion
+
 --#region: Main
+
 local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
@@ -133,10 +140,8 @@ local aimbot = {}; do
             end;
         end;
 
-        register_callback('create_move', function(cmd)
-            xpcall(function()
-                jump_scout:on_create_move(cmd);
-            end, print);
+        register_callback('create_move', function()
+            xpcall(jump_scout.on_create_move, print, jump_scout);
         end);
     end;
 end;
@@ -972,4 +977,5 @@ local skinchanger = {}; do
         end);
     end;
 end;
+
 --#endregion
