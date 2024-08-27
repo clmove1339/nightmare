@@ -27,14 +27,24 @@ function entity_t:get_active_weapon()
     local m_hActiveWeapon = ffi.cast('int*', self[netvars.m_hActiveWeapon]);
     local weapon = entitylist.from_handle(m_hActiveWeapon[0]);
 
-    return weapon;
+    if weapon ~= nil and weapon ~= -1 then
+        local idx = ffi.cast('int*', weapon + 0x64)[0];
+
+        return entitylist.get(idx);
+    end;
 end;
 
 function entity_t:can_fire()
     local weapon = self:get_active_weapon();
     local servertime = ffi.cast('int*', self[netvars.m_nTickBase])[0] * globals.interval_per_tick;
 
-    return ffi.cast('float*', weapon + netvars.m_flNextPrimaryAttack)[0] <= servertime;
+    local m_flNextPrimaryAttack = ffi.cast('float*', weapon[netvars.m_flNextPrimaryAttack])[0];
+
+    if ffi.cast('float*', self[netvars.m_flNextAttack])[0] > servertime then
+        return false;
+    end;
+
+    return m_flNextPrimaryAttack <= servertime;
 end;
 
 function entity_t:get_eye_position()

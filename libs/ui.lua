@@ -77,6 +77,8 @@ local ui = {}; do
         return data;
     end;
 
+
+
     ---@param element any
     ---@param i? any
     ---@param upvalue? boolean
@@ -162,7 +164,7 @@ local ui = {}; do
 
     ---@diagnostic disable-next-line: circle-doc-class
     ---@class menu_item: menu_item
-    ---@field override fun(self: menu_item, value: any, index: integer): {element: menu_item, old_value: any, overrided: boolean}
+    ---@field override fun(self: menu_item, value: any, index?: integer): {element: menu_item, old_value: any, overrided: boolean}
     ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
     ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>, value?: any): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 

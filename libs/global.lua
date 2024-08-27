@@ -53,6 +53,8 @@ ffi = require 'ffi'; do
         void* GetProcAddress(void*, const char*);
         int VirtualProtect(void*, unsigned long, unsigned long, unsigned long*);
 
+        short GetKeyState(int);
+
         typedef struct {
             char pad_0000[4];
             char* ConsoleName;
@@ -213,6 +215,25 @@ end;
 function math.round(num, idp)
     local mult = 10 ^ (idp or 0);
     return math.floor(num * mult + 0.5) / mult;
+end;
+
+function normalize(x, min, max)
+    if x < min or x > max then
+        local delta = max - min;
+        local offset = x - min;
+
+        return min + (offset % delta);
+    end;
+
+    return x;
+end;
+
+function normalize_yaw(x)
+    return normalize(x, -180, 180);
+end;
+
+function has_bit(x, p)
+    return x % (p + p) >= p;
 end;
 
 ---Measures the average time taken to execute a function.
