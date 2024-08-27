@@ -20,16 +20,16 @@ require 'libs.global';
 require 'libs.interfaces';
 require 'libs.entity';
 require 'libs.vector';
+require 'libs.render';
+require 'libs.vector';
 
+local materials = require 'libs.material_system';
 local defensive = require 'libs.defensive';
+local inspect = require 'libs.inspect';
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
-local ui = require 'libs.ui';
 local utils = require 'libs.utils';
-local engine_client = require 'libs.engine_client';
 local vmt = require 'libs.vmt';
-local inspect = require 'libs.inspect';
-local materials = require 'libs.material_system';
 
 local input = require 'libs.input';
 --#endregion
@@ -411,6 +411,55 @@ end;
 local visualization = {}; do
     ---@private
     local handle = ui.create('Visualization');
+
+    local widgets = {}; do
+        local master = handle:multicombo('Select widgets:', { 'Watermark', 'Keybinds', 'Spectators' });
+        local accent_color = handle:color('Accent color', color_t.new(1, 172 / 255, 172 / 255, 1), false);
+
+        local font = {
+            icons = {
+                [16] = render.setup_font('nix/nightmare/nightmare.ttf', 16)
+            },
+            text = {
+                [18] = render.setup_font('c:/windows/fonts/seguisb.ttf', 18, 32)
+            }
+        };
+
+        local function watermark()
+            local enabled = master:get(0);
+            local alpha = animation:new('watermark_alpha', nil, enabled);
+            local margin = 8;
+
+            local color = accent_color:get();
+            local position = vec2_t.new(screen.x - 500, margin);
+            color.a = alpha;
+
+            local netchannel = engine_client:get_net_channel_info();
+            local latency = netchannel:get_latency(0) * 1000;
+
+            local text = string.format('%s %s ms %s', get_user_name(), string.format('%.1f', latency), os.date('%I:%M'));
+            local icon = 'A';
+
+            local measure = {
+                icon = render.measure_text(font.icons[16], icon),
+                text = render.measure_text(font.text[18], text)
+            };
+
+            -- сорри, я не придумал как назвать переменную
+            local jopa = 3;
+            local height = measure.text.y + measure.icon.y + (jopa * 3) + (margin * 2);
+            local width = measure.text.x + (margin * 2);
+
+            position.x = screen.x - width - margin;
+
+            render.rect_filled(position, position + vec2_t.new(width, height), color_t.new(36 / 255, 36 / 255, 36 / 255, alpha), 4);
+            render.text(font.icons[16], position + vec2_t.new(width * .5, margin), color, 'c', icon);
+            render.rect_filled(position + vec2_t.new(margin, measure.icon.y + margin + (jopa * 2)), position + vec2_t.new(width - margin, measure.icon.y + margin + (jopa * 2) + 2), color_t.new(65 / 255, 65 / 255, 65 / 255, alpha));
+            render.text(font.text[18], position + vec2_t.new(margin, height - measure.text.y - margin), color_t.new(.9, .9, .9, alpha), '', text);
+        end;
+
+        register_callback('paint', watermark);
+    end;
 
     local third_person = {}; do
         local old_value = cvars.cam_idealdist:get_int();

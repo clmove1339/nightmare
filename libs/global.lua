@@ -1,8 +1,9 @@
-_DEV = true;
+_DEV = false;
 NATIVE_PRINT = NATIVE_PRINT or print;
 NotImplemented = 'NotImplemented';
 unpack = unpack or table.unpack;
 table.unpack = unpack;
+screen = render.screen_size();
 
 ---Checks if a flag is set in a set of flags
 ---@param flags integer The set of flags
