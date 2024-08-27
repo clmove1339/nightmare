@@ -126,7 +126,7 @@ local aimbot = {}; do
                 end;
 
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-                local in_air = bit.band(cmd.buttons, IN.JUMP) == IN.JUMP or bit.band(flags, FL.ONGROUND) == 0;
+                local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
 
                 local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
@@ -174,18 +174,22 @@ local antiaim = {}; do
             master = features,
             [2] = manual
         }, 1);
-
-        -- features:depend({ { enable, true }, { sub_handle, 0 } });
-        -- manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
+    ---@alias PLAYER_STATE string
+    ---| 'Default'
+    ---| 'Standing'
+    ---| 'Running'
+    ---| 'Walking'
+    ---| 'Crouching
+    ---| 'Sneaking'
+    ---| 'In Air'
+    ---| 'In Air & Crouching'
+    ---| 'On use'
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
 
     ---@param cmd user_cmd_t
-    ---@return 'Default'|'Standing'|'Running'|'Walking'| 'Crouching'|'Sneaking'|'In Air'|'In Air & Crouching'|'On use'
+    ---@return PLAYER_STATE
     function antiaim:get_statement(cmd)
         local me = entitylist.get_local_player();
 
@@ -223,39 +227,40 @@ local antiaim = {}; do
     end;
 
     antiaim.builder = {}; do
-        ---@type table<string, menu_item[]>
+        ---@type table<PLAYER_STATE, CState>
         local information = {};
         local state_selector = handle:combo('State', states, 0);
 
-        state_selector:depend({ { enable, true }, { sub_handle, 1 } });
+        enable:connect({
+            master = sub_handle,
+            [2] = state_selector
+        }, true);
 
+        ---@param state PLAYER_STATE
+        ---@param index number
         local function setup_state(state, index)
+            ---@class CState
             local info = {
                 override = handle:switch('Override ' .. state, state == 'Default'),
-                pitch = handle:combo('Pitch##' .. state, { 'None', 'Down', 'Fake down', 'Fake up' }, 1),
+                pitch = handle:combo('Pitch##' .. state, { 'Off', 'Down', 'Fake down', 'Fake up' }, 1),
                 base_yaw = handle:combo('Base yaw##' .. state, { 'Local view', 'Static', 'At targets' }, 2),
                 yaw_offset = handle:slider_int('Yaw offset##' .. state, -180, 180, 180),
-                yaw_modifier = handle:combo('Yaw modifier##' .. state, { 'None', 'Center', 'Offset', 'Random', '3-Way', '5-Way' }, 0),
+                yaw_modifier = handle:combo('Yaw modifier##' .. state, { 'Off', 'Center', 'Offset', 'Random', '3-Way', '5-Way' }, 0),
                 yaw_modifier_offset = handle:slider_int('Yaw modifier offset##' .. state, -180, 180, 0),
-                yaw_desync = handle:combo('Yaw desync##' .. state, { 'None', 'Static', 'Jitter', 'Random Jitter' }),
+                yaw_desync = handle:combo('Yaw desync##' .. state, { 'Off', 'Static', 'Jitter', 'Random Jitter' }),
                 yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0),
                 enable_fakelag = handle:switch('Enable fakelag##' .. state, false, false, 'Movement/Fakelag'),
                 fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random' }, nil, 'Movement/Fakelag'),
                 fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
             };
 
-            -- for element_name, element in pairs(info) do
-            --     local is_default_state = state == 'Default';
-            --     local is_override_checkbox = element_name == 'override';
+            local defensive_class, defensive_switch = handle:switch('Defensive settings [  ]##' .. state, nil, true);
 
-            --     element:depend({
-            --         { enable,         true },
-            --         { state_selector, index - 1 },
-            --         { sub_handle,     1 },
-            --         not (is_default_state and is_override_checkbox),
-            --         (is_default_state or is_override_checkbox) and true or { info.override, true },
-            --     });
-            -- end;
+            info.defensive = defensive_switch;
+            info.defensive_pitch = defensive_class:combo('Pitch##' .. state, { 'Off', 'Custom', 'Random', 'Jitter', 'RAKETA' });
+            info.defensive_pitch_value = defensive_class:slider_int('Pitch value##' .. state, -89, 89, 0);
+            info.defensive_yaw = defensive_class:combo('Yaw modifier##' .. state, { 'Off', 'Opposite', 'Spin', 'Random' });
+            info.defensive_spin_speed = defensive_class:slider_int('Spin speed##' .. state, 0, 180, 0);
 
             state_selector:connect({
                 master = info.override,
@@ -277,6 +282,15 @@ local antiaim = {}; do
                         master = info.fakelag_type,
                         fakelag_limit = info.fakelag_limit
                     }
+                },
+                info.defensive,
+                {
+                    master = info.defensive_pitch,
+                    custom_defensive_pitch = info.defensive_pitch_value
+                },
+                {
+                    master = info.defensive_yaw,
+                    [3] = info.defensive_spin_speed
                 }
             }, index);
 
@@ -291,23 +305,23 @@ local antiaim = {}; do
             setup_state(state, i);
         end;
 
-        local base_path = 'Movement/Anti aim';
+        local source = nixware['Movement']['Anti aim'];
 
         local nixware_elements = {
-            pitch = menu.find_combo_box('Pitch', base_path),
-            base_yaw = menu.find_combo_box('Base yaw', base_path),
-            yaw_offset = menu.find_slider_int('Yaw offset', base_path),
-            yaw_modifier = menu.find_combo_box('Yaw modifier', base_path),
-            yaw_modifier_offset = menu.find_slider_int('Yaw modifier offset', base_path),
-            yaw_desync = menu.find_combo_box('Yaw desync', base_path),
-            yaw_desync_length = menu.find_slider_int('Yaw desync length', base_path),
+            pitch = source.pitch,
+            base_yaw = source.base_yaw,
+            yaw_offset = source.yaw_offset,
+            yaw_modifier = source.yaw_modifier,
+            yaw_modifier_offset = source.yaw_modifier_offset,
+            yaw_desync = source.yaw_desync,
+            yaw_desync_length = source.yaw_desync_length,
         };
 
         antiaim.fakelag = {}; do
             local cache = {};
             local server_origin = vec3_t.new(0, 0, 0);
 
-            ---@param state table
+            ---@param state CState
             ---@param cmd user_cmd_t
             antiaim.fakelag.handle = function(state, cmd)
                 local me = entitylist.get_local_player();
@@ -382,14 +396,84 @@ local antiaim = {}; do
             end;
         end;
 
-        local native_enabled = nixware['Movement']['Anti aim'].enabled:get();
+        antiaim.defensive = {}; do
+            local cache = { false, 0 };
+            -- 'Off', 'Custom', 'Random', 'Jitter', 'RAKETA'
+            -- 'Off' 'Opposite', 'Spin', 'Random'
+
+            ---@param settings CState
+            ---@param type integer
+            ---@return number
+            antiaim.defensive.calculate_pitch = function(settings, type)
+                local value = settings.defensive_pitch_value:get();
+
+                if type == 1 then
+                    return value;
+                elseif type == 2 then
+                    return math.random(-math.abs(value), math.abs(value));
+                elseif type == 3 then
+                    if globals.choked_commands == 0 then
+                        cache[1] = not cache[1];
+                    end;
+
+                    return cache[1] and value or -value;
+                end;
+                return 0;
+            end;
+
+            ---@param settings CState
+            ---@param type integer
+            antiaim.defensive.calculate_yaw = function(settings, type)
+                if type == 1 then
+                    source.yaw_modifier:set(1);
+                    source.yaw_modifier_offset:set(90);
+                elseif type == 2 then
+                    local spin_speed = settings.defensive_spin_speed:get();
+                    if cache[2] > 180 then
+                        cache[2] = -180;
+                    end;
+                    cache[2] = cache[2] + spin_speed;
+                    source.base_yaw:set(0);
+                    source.yaw_offset:set(cache[2]);
+                elseif type == 3 then
+                    source.base_yaw:set(0);
+                    source.yaw_offset:set(math.random(-180, 180));
+                end;
+            end;
+
+            ---@param settings CState
+            ---@param cmd user_cmd_t
+            antiaim.defensive.handle = function(settings, cmd)
+                if not settings.defensive:get() then
+                    return;
+                end;
+
+                if not defensive:is_active() then
+                    return;
+                end;
+
+                local pitch_type = settings.defensive_pitch:get();
+                local modifier_type = settings.defensive_yaw:get();
+
+                if pitch_type ~= 0 then
+                    source.pitch:set(0);
+                    cmd.viewangles.pitch = antiaim.defensive.calculate_pitch(settings, pitch_type);
+                end;
+
+                if modifier_type ~= 0 then
+                    source.yaw_modifier:set(0);
+                    antiaim.defensive.calculate_yaw(settings, modifier_type);
+                end;
+            end;
+        end;
+
+        local native_enabled = source.enabled:get();
 
         ---@param cmd user_cmd_t
         local function setup(cmd)
-            nixware['Movement']['Anti aim'].enabled:set(enable:get());
+            source.enabled:set(enable:get());
 
             local state = antiaim:get_statement(cmd);
-            ---@diagnostic disable-next-line: undefined-field
             state = information[state].override:get() and state or 'Default';
 
             local settings = information[state];
@@ -399,6 +483,7 @@ local antiaim = {}; do
             end;
 
             antiaim.fakelag.handle(settings, cmd);
+            antiaim.defensive.handle(settings, cmd);
         end;
 
         register_callback('create_move', function(cmd)
@@ -406,7 +491,7 @@ local antiaim = {}; do
         end);
 
         register_callback('unload', function()
-            nixware['Movement']['Anti aim'].enabled:set(native_enabled);
+            source.enabled:set(native_enabled);
         end);
     end;
 end;
@@ -508,7 +593,7 @@ local misc = {}; do
         local class, switch = handle:switch('Killsay', false, true);
         local CPM = class:slider_int('Characters per minute', 200, 500, 300); -- Characters per minute
 
-        ---@type table<number, {list: string[], flags?: table<boolean?>}>
+        ---@type CState<number, {list: string[], flags?: CState<boolean?>}>
         local phrases = require 'libs.phrases';
         local already_writing = false;
 
@@ -552,7 +637,7 @@ local misc = {}; do
         end;
 
         ---@param event game_event_t
-        ---@param flags table
+        ---@param flags CState
         local function is_valid_flags(event, flags)
             if type(flags) ~= 'table' then
                 return true;
