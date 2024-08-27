@@ -22,27 +22,17 @@ require 'libs.entity';
 require 'libs.vector';
 require 'libs.render';
 
-<<<<<<< Updated upstream
+local materials = require 'libs.material_system';
 local defensive = require 'libs.defensive';
-=======
-local engine_client = require 'libs.engine_client';
-local animation = require 'libs.animation';
 local inspect = require 'libs.inspect';
->>>>>>> Stashed changes
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
 local utils = require 'libs.utils';
 local vmt = require 'libs.vmt';
-<<<<<<< Updated upstream
-local inspect = require 'libs.inspect';
-local materials = require 'libs.material_system';
 
 --#endregion
 
 --#region: Main
-=======
-local ui = require 'libs.ui';
->>>>>>> Stashed changes
 
 local aimbot = {}; do
     ---@private
