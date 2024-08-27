@@ -14,6 +14,8 @@ netvars = {
     m_hGroundEntity       = engine.get_netvar_offset('DT_BasePlayer', 'm_hGroundEntity'),
     m_nTickBase           = engine.get_netvar_offset('DT_BasePlayer', 'm_nTickBase'),
     m_iTeamNum            = engine.get_netvar_offset('DT_BaseEntity', 'm_iTeamNum'),
+    m_nHitboxSet          = engine.get_netvar_offset('DT_BaseAnimating', 'm_nHitboxSet'),
+    m_nModelIndex         = engine.get_netvar_offset('DT_BaseEntity', 'm_nModelIndex'),
     m_vecViewOffset       = 0x108
 };
 

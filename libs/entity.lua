@@ -1,4 +1,5 @@
 require 'libs.enums';
+local memory = require 'libs.memory';
 
 function entity_t:is_alive()
     return self and ffi.cast('char*', self[netvars.m_lifeState])[0] == 0;
@@ -77,3 +78,95 @@ function entity_t:is_visible(target)
 
     return false;
 end;
+
+-- region entity
+
+local StudioHitboxSet = ffi.typeof('StudioHitboxSet*');
+local StudioBbox = ffi.typeof('StudioBbox*');
+local native_get_poseparams = ffi.cast('pose_parameters_t*(__thiscall*)(void*, int)', find_pattern('client.dll', '55 8B EC 8B 45 08 57 8B F9 8B 4F 04 85 C9 75 15'));
+local native_GetModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 1, 'void*(__thiscall*)(void*, int)');
+local native_GetStudioModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 32, 'StudioHdr*(__thiscall*)(void*, void*)');
+
+function entity_t:get_studio_hdr()
+    local studio_hdr = ffi.cast('void**', self[0x2950])[0];
+
+    return studio_hdr;
+end;
+
+function entity_t:get_pose_params(index)
+    local studio_hdr = self:get_studio_hdr();
+
+    local params = native_get_poseparams(studio_hdr, index);
+
+    return params;
+end;
+
+function entity_t:set_pose_params(index, m_start, m_end, m_state)
+    local params = self:get_pose_params(index);
+
+    local state = m_state or ((m_start + m_end) / 2);
+    params.m_flStart, params.m_flEnd, params.m_flState = m_start, m_end, state;
+end;
+
+function entity_t:restore_pose_params()
+    self:set_pose_params(0, -180, 180);
+    self:set_pose_params(12, -90, 90);
+    self:set_pose_params(6, 0, 1, 0);
+    self:set_pose_params(7, -180, 180);
+end;
+
+function entity_t:get_bone_matrix(bone_index)
+    local pointer = IClientEntityList:GetClientEntity(self:get_index());
+
+    local bone_matrix = ffi.cast('float*', ffi.cast('uintptr_t*', pointer + 0x26A8)[0] + 0x30 * bone_index);
+
+    return bone_matrix;
+end;
+
+function entity_t:get_hitbox_studio_bbox(hitboxes)
+    local m_nModelIndex = ffi.cast('int*', self[netvars.m_nModelIndex])[0];
+    local m_nHitboxSet = ffi.cast('int*', self[netvars.m_nHitboxSet])[0];
+
+    local pModel = native_GetModel(m_nModelIndex);
+    if pModel == nil then
+        return nil;
+    end;
+
+    local pStudioHdr = native_GetStudioModel(pModel);
+    if pStudioHdr == nil then
+        return nil;
+    end;
+
+    local pHitboxSet = ffi.cast(StudioHitboxSet, ffi.cast('uintptr_t', pStudioHdr) + pStudioHdr.hitboxSetIndex) + m_nHitboxSet;
+
+    local result = {}; for _, v in ipairs(hitboxes) do
+        result[v % pHitboxSet.numHitboxes] = ffi.cast(StudioBbox, ffi.cast('uintptr_t', pHitboxSet) + pHitboxSet.hitboxIndex) + v % pHitboxSet.numHitboxes;
+    end;
+
+    return result;
+end;
+
+local function vector_transform(vector, matrix)
+    return vec3_t.new(
+        vector.x * matrix[0] + vector.y * matrix[1] + vector.z * matrix[2] + matrix[3],
+        vector.x * matrix[4] + vector.y * matrix[5] + vector.z * matrix[6] + matrix[7],
+        vector.x * matrix[8] + vector.y * matrix[9] + vector.z * matrix[10] + matrix[11]
+    );
+end;
+
+function entity_t:get_hitbox_position(hitbox_index)
+    local hitboxStudioBbox = self:get_hitbox_studio_bbox({ hitbox_index })[hitbox_index];
+
+    local boneMatrix = self:get_bone_matrix(hitboxStudioBbox.bone);
+
+    if boneMatrix == nil then
+        return nil;
+    end;
+
+    local min, max = vector_transform(hitboxStudioBbox.bbMin, boneMatrix), vector_transform(hitboxStudioBbox.bbMax, boneMatrix);
+    local center = (min + max) * .5;
+
+    return center;
+end;
+
+-- endregion

@@ -57,7 +57,7 @@ local function render_text(text, font, pos, color, size)
             local text = pattern:match('^\adefault(.-)$');
 
             if text ~= nil then
-                render.text(text, font, position, color_t.new(r, g, b, a * alpha_mult));
+                o_render_text(text, font, position, color_t.new(r, g, b, a * alpha_mult));
                 position.x = position.x + render.calc_text_size(text, font).x;
             else
                 local clr, text = pattern:match('^\a(%x%x%x%x%x%x%x%x)(.-)$');

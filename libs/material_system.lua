@@ -7,8 +7,7 @@ local material_c = {}; do
         return ffi.string(self.this:GetName());
     end;
 
-    ---Do not use!
-    function material_c:get_group()
+    function material_c:get_texture_group_name()
         return ffi.string(self.this:GetTextureGroupName());
     end;
 
@@ -91,18 +90,18 @@ local material_system = {}; do
         return init(IMaterialSystem:GetMaterial(material));
     end;
 
-    ---Do not use!
     ---@param name string
-    ---@param group? string
-    ---@return CMaterial
-    function material_system:find_material(name, group)
-        local nullptr = ffi.cast('void*', nil);
+    ---@param texture_group_name? string
+    ---@param complain? boolean
+    ---@param complain_prefix? string
+    ---@return CMaterial?
+    function material_system:find_material(name, texture_group_name, complain, complain_prefix)
+        complain = complain or false;
+        complain_prefix = complain_prefix or nil;
 
-        if group == nil then
-            return init(IMaterialSystem:FindMaterial(name, nullptr));
-        end;
+        local material = IMaterialSystem:FindMaterial(name, texture_group_name, complain, complain_prefix);
 
-        return init(IMaterialSystem:FindMaterial(name, group));
+        return init(material);
     end;
 
     ---@return number

@@ -58,7 +58,7 @@ INetChannelInfo = memory:class({
     GetTimeoutSeconds = { 26, 'float(__thiscall*)(void*)' }
 });
 
----@class IMaterial : class_t
+---@class IMaterial
 ---@field GetName fun(self: IMaterial): ffi.cdata*
 ---@field GetTextureGroupName fun(self: IMaterial): ffi.cdata*
 ---@field AlphaModulate fun(self: IMaterial, alpha: number)
@@ -76,6 +76,13 @@ IMaterial = memory:class({
     IsErrorMaterial = { 42, 'bool(__thiscall*)(void*)' },
 });
 
+---@class IMaterialSystem
+---@field CreateMaterial fun(self: IMaterialSystem, name: string, key_values: ffi.cdata*): ffi.cdata*
+---@field FindMaterial fun(self: IMaterialSystem, name: string, texture_group_name?: string, complain?: boolean, complain_prefix?: string): ffi.cdata*
+---@field FirstMaterial fun(self: IMaterialSystem): number
+---@field NextMaterial fun(self: IMaterialSystem, handle: number): number
+---@field InvalidMaterial fun(self: IMaterialSystem): number
+---@field GetMaterial fun(self: IMaterialSystem, handle: number): ffi.cdata*
 IMaterialSystem = memory:interface('materialsystem.dll', 'VMaterialSystem080', {
     CreateMaterial = { 83, 'void*(__thiscall*)(void*, char const*, void*)' },
     FindMaterial = { 84, 'void*(__thiscall*)(void*, char const*, const char*, bool, const char*)' },
@@ -85,11 +92,17 @@ IMaterialSystem = memory:interface('materialsystem.dll', 'VMaterialSystem080', {
     GetMaterial = { 89, 'void*(__thiscall*)(void*, int)' },
 });
 
+---@class IClientEntityList
+---@field GetClientEntity fun(self: IClientEntityList, index: number): number
+---@field GetClientEntityFromHandle fun(self: IClientEntityList, handle: number): number
 IClientEntityList = memory:interface('client.dll', 'VClientEntityList003', {
     GetClientEntity = { 3, 'uintptr_t(__thiscall*)(void*, int)' },
     GetClientEntityFromHandle = { 4, 'uintptr_t(__thiscall*)(void*, uintptr_t)' }
 });
 
+---@class IEngineSound
+---@field EmitAmbientSound fun(self: IEngineSound, sound: string, volume: number, pitch: number, flags: number, delay: number): number
+---@field StopSoundByGuid fun(self: IEngineSound, guid: number, play_end_sound: boolean)
 IEngineSound = memory:interface('engine.dll', 'IEngineSoundClient003', {
     EmitAmbientSound = { 12, 'int(__thiscall*)(void*, const char*, float, int, int, float)' },
     StopSoundByGuid = { 17, 'void(__thiscall*)(void*, int, bool)' },
@@ -99,17 +112,17 @@ ISurface = memory:interface('vguimatsurface.dll', 'VGUI_Surface031', {
     SurfaceGetCursorPos = { 100, 'unsigned int(__thiscall*)(void *thisptr, int &x, int &y)' }
 });
 
---- @class IEngineClient : class_t
---- @field GetLocalPlayer fun(self: IEngineClient): number
---- @field GetNetChannel fun(self: IEngineClient): ffi.cdata*
+---@class IEngineClient
+---@field GetLocalPlayer fun(self: IEngineClient): number
+---@field GetNetChannel fun(self: IEngineClient): ffi.cdata*
 IEngineClient = memory:interface('engine.dll', 'VEngineClient014', {
     GetLocalPlayer = { 12, 'int(__thiscall*)(void*)' },
     GetNetChannel = { 78, 'void*(__thiscall*)(void*)' },
 });
 
---- @class IVRenderView : class_t
---- @field SetBlend fun(self: IVRenderView, value: number)
---- @field GetBlend fun(self: IVRenderView): number
+---@class IVRenderView
+---@field SetBlend fun(self: IVRenderView, value: number)
+---@field GetBlend fun(self: IVRenderView): number
 IVRenderView = memory:interface('engine.dll', 'VEngineRenderView014', {
     SetBlend = { 4, 'void(__thiscall*)(void*, float)' },
     GetBlend = { 5, 'float(__thiscall*)(void*)' },

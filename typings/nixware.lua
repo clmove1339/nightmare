@@ -4,7 +4,7 @@
 ---@class menu_item
 ---@field set_visible fun(self: menu_item, value: boolean)
 ---@field is_visible fun(self: menu_item): boolean
----@field get fun(self: menu_item): any
+---@field get fun(self: menu_item, index?: number): any
 ---@field set fun(self: menu_item, value: any)
 
 ---@class vec2_t
@@ -445,14 +445,14 @@ engine = {};
 engine.execute_client_cmd = function(cmd) end;
 
 ---@class surface_t
----@field name string	
----@field props number	
+---@field name string
+---@field props number
 ---@field flags number
 
 ---@class plane_t
----@field normal vec3_t	
----@field dist number	
----@field type number	
+---@field normal vec3_t
+---@field dist number
+---@field type number
 ---@field signbits number
 
 ---@class trace_t
@@ -581,8 +581,8 @@ globals = {};
 ---@field mousedy number Mouse Y movement delta
 
 ---@class view_setup_t
----@field fov number	
----@field view angle_t	
+---@field fov number
+---@field view angle_t
 ---@field camera vec3_t
 
 ---@alias __game_events "player_death"|"other_death"|"player_hurt"|"item_purchase"|"bomb_beginplant"|"bomb_abortplant"|"bomb_planted"|"bomb_defused"|"bomb_exploded"|"bomb_dropped"|"bomb_pickup"|"defuser_dropped"|"defuser_pickup"|"announce_phase_end"|"cs_intermission"|"bomb_begindefuse"|"bomb_abortdefuse"|"hostage_follows"|"hostage_hurt"|"hostage_killed"|"hostage_rescued"|"hostage_stops_following"|"hostage_rescued_all"|"hostage_call_for_help"|"vip_escaped"|"vip_killed"|"player_radio"|"bomb_beep"|"weapon_fire"|"weapon_fire_on_empty"|"grenade_thrown"|"weapon_outofammo"|"weapon_reload"|"weapon_zoom"|"silencer_detach"|"inspect_weapon"|"weapon_zoom_rifle"|"player_spawned"|"item_pickup"|"item_pickup_slerp"|"item_pickup_failed"|"item_remove"|"ammo_pickup"|"item_equip"|"enter_buyzone"|"exit_buyzone"|"buytime_ended"|"enter_bombzone"|"exit_bombzone"|"enter_rescue_zone"|"exit_rescue_zone"|"silencer_off"|"silencer_on"|"buymenu_open"|"buymenu_close"|"round_prestart"|"round_poststart"|"round_start"|"round_end"|"grenade_bounce"|"hegrenade_detonate"|"flashbang_detonate"|"smokegrenade_detonate"|"smokegrenade_expired"|"molotov_detonate"|"decoy_detonate"|"decoy_started"|"tagrenade_detonate"|"inferno_startburn"|"inferno_expire"|"inferno_extinguish"|"decoy_firing"|"bullet_impact"|"player_footstep"|"player_jump"|"player_blind"|"player_falldamage"|"door_moving"|"round_freeze_end"|"mb_input_lock_success"|"mb_input_lock_cancel"|"nav_blocked"|"nav_generate"|"player_stats_updated"|"achievement_info_loaded"|"spec_target_updated"|"spec_mode_updated"|"hltv_changed_mode"|"cs_game_disconnected"|"cs_win_panel_round"|"cs_win_panel_match"|"cs_match_end_restart"|"cs_pre_restart"|"show_freezepanel"|"hide_freezepanel"|"freezecam_started"|"player_avenged_teammate"|"achievement_earned"|"achievement_earned_local"|"item_found"|"items_gifted"|"repost_xbox_achievements"|"match_end_conditions"|"round_mvp"|"player_decal"|"teamplay_round_start"|"show_survival_respawn_status"|"client_disconnect"|"gg_player_levelup"|"ggtr_player_levelup"|"assassination_target_killed"|"ggprogressive_player_levelup"|"gg_killed_enemy"|"gg_final_weapon_achieved"|"gg_bonus_grenade_achieved"|"switch_team"|"gg_leader"|"gg_team_leader"|"gg_player_impending_upgrade"|"write_profile_data"|"trial_time_expired"|"update_matchmaking_stats"|"player_reset_vote"|"enable_restart_voting"|"sfuievent"|"start_vote"|"player_given_c4"|"player_become_ghost"|"gg_reset_round_start_sounds"|"tr_player_flashbanged"|"tr_mark_complete"|"tr_mark_best_time"|"tr_exit_hint_trigger"|"bot_takeover"|"tr_show_finish_msgbox"|"tr_show_exit_msgbox"|"reset_player_controls"|"jointeam_failed"|"teamchange_pending"|"material_default_complete"|"cs_prev_next_spectator"|"cs_handle_ime_event"|"nextlevel_changed"|"seasoncoin_levelup"|"tournament_reward"|"start_halftime"|"ammo_refill"|"parachute_pickup"|"parachute_deploy"|"dronegun_attack"|"drone_dispatched"|"loot_crate_visible"|"loot_crate_opened"|"open_crate_instr"|"smoke_beacon_paradrop"|"survival_paradrop_spawn"|"survival_paradrop_break"|"drone_cargo_detached"|"drone_above_roof"|"choppers_incoming_warning"|"firstbombs_incoming_warning"|"dz_item_interaction"|"snowball_hit_player_face"|"survival_teammate_respawn"|"survival_no_respawns_warning"|"survival_no_respawns_final"|"player_ping"|"player_ping_stop"|"guardian_wave_restart"|"team_info"|"team_score"|"teamplay_broadcast_audio"|"player_team"|"player_class"|"player_chat"|"player_score"|"player_spawn"|"player_shoot"|"player_use"|"player_changename"|"player_hintmessage"|"base_player_teleported"|"game_init"|"game_newmap"|"game_start"|"game_end"|"game_message"|"break_breakable"|"break_prop"|"entity_killed"|"bonus_updated"|"achievement_event"|"achievement_increment"|"physgun_pickup"|"flare_ignite_npc"|"helicopter_grenade_punt_miss"|"user_data_downloaded"|"ragdoll_dissolved"|"hltv_changed_target"|"vote_ended"|"vote_started"|"vote_changed"|"vote_passed"|"vote_failed"|"vote_cast"|"vote_options"|"replay_saved"|"entered_performance_mode"|"browse_replays"|"replay_youtube_stats"|"inventory_updated"|"cart_updated"|"store_pricesheet_updated"|"gc_connected"|"item_schema_initialized"
