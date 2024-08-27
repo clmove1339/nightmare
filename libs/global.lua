@@ -191,6 +191,26 @@ ffi = require 'ffi'; do
             float capsuleRadius;
             int unused[4];
         } StudioBbox;
+
+        typedef struct {
+            int64_t __pad0;
+            union {
+                int64_t xuid;
+                struct {
+                    int xuidlow;
+                    int xuidhigh;
+                };
+            };
+            char name[128];
+            int userid;
+            char guid[33];
+            unsigned int friends_id;
+            char friends_name[128];
+            bool fake_player;
+            bool is_hltv;
+            unsigned int custom_files[4];
+            unsigned char files_downloaded;
+        } player_info_t;
     ]];
 end;
 

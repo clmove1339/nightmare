@@ -151,6 +151,70 @@ local aimbot = {}; do
             xpcall(jump_scout.on_create_move, print, jump_scout, cmd);
         end);
     end;
+
+    local logs = {}; do
+        local group, enable = handle:switch('Aimbot notifications', false, true);
+
+        local hitgroups = {
+            [0]  = 'generic',
+            [1]  = 'head',
+            [2]  = 'chest',
+            [3]  = 'stomach',
+            [4]  = 'left arm',
+            [5]  = 'right arm',
+            [6]  = 'left leg',
+            [7]  = 'right leg',
+            [8]  = 'neck',
+            [10] = 'gear'
+        };
+
+        local type_hit = {
+            ['inferno'] = 'Burned',
+            ['taser'] = 'Tasered',
+            ['knife'] = 'Knifed',
+            ['hegrenade'] = 'Naded',
+            ['decoy'] = 'Naded',
+            ['flashbang'] = 'Naded',
+            ['smokegrenade'] = 'Naded',
+            ['molotov'] = 'Naded'
+        };
+
+        function logs:player_hurt(event)
+            local userid = entitylist.get(event:get_int('userid', 0), true);
+            local attacker = entitylist.get(event:get_int('attacker', 0), true);
+
+            local me = entitylist.get_local_player();
+
+            if me == nil or userid == nil or attacker == nil then
+                return;
+            end;
+
+            if attacker ~= me or me == userid then
+                return;
+            end;
+
+            local player_info = userid:get_player_info();
+            local weapon = event:get_string('weapon', 'unknown');
+
+            local hit = type_hit[weapon] or 'Hit';
+
+            if hit == 'Hit' then
+                print(string.format("%s %s's %s for %s damage", hit, player_info.name, hitgroups[event:get_int('hitgroup', 0)], event:get_int('dmg_health', 0)));
+            else
+                print(string.format('%s %s for %s damage', hit, player_info.name, event:get_int('dmg_health', 0)));
+            end;
+        end;
+
+        register_callback('player_hurt', function(event)
+            if not enable:get() then
+                return;
+            end;
+
+            xpcall(function()
+                logs:player_hurt(event); -- РАДИ АЛЛАХА НЕ КРАШНИ
+            end, print, event);
+        end);
+    end;
 end;
 
 local antiaim = {}; do
@@ -543,7 +607,7 @@ local visualization = {}; do
             local formatted_latency = string.format('%.1f ms', latency);
             local watermark_text = string.format(' %s \a414141ff|\adefault %s \a414141ff|\adefault %s ', user_name, formatted_latency, current_time);
 
-            local icon = 'СИСЬКИ ПОПКИ КАКАЩЬКЕ';
+            local icon = 'NIGHTMARE';
             local text_size = render.measure_text(font.text[18], watermark_text);
             local icon_size = render.measure_text(font.icons[16], icon);
 

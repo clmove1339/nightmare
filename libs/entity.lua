@@ -58,6 +58,29 @@ local StudioBbox = ffi.typeof('StudioBbox*');
 local native_get_poseparams = ffi.cast('pose_parameters_t*(__thiscall*)(void*, int)', find_pattern('client.dll', '55 8B EC 8B 45 08 57 8B F9 8B 4F 04 85 C9 75 15'));
 local native_GetModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 1, 'void*(__thiscall*)(void*, int)');
 local native_GetStudioModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 32, 'StudioHdr*(__thiscall*)(void*, void*)');
+local native_GetPlayerInfo = memory:get_vfunc('engine.dll', 'VEngineClient014', 8, 'bool(__thiscall*)(void*, int, void*)');
+
+function entity_t:get_player_info()
+    local player_info_t_ctype = ffi.new('player_info_t');
+    local index = self:get_index();
+
+    native_GetPlayerInfo(index, player_info_t_ctype);
+
+    local player_info =
+    {
+        [0] = player_info_t_ctype,
+
+        xuid = { low = player_info_t_ctype.xuidlow, high = player_info_t_ctype.xuidhigh },
+        name = ffi.string(player_info_t_ctype.name),
+        userid = player_info_t_ctype.userid,
+        fake_player = player_info_t_ctype.fake_player,
+        is_hltv = player_info_t_ctype.is_hltv,
+        custom_files = player_info_t_ctype.custom_files,
+        files_downloaded = player_info_t_ctype.files_downloaded
+    };
+
+    return player_info;
+end;
 
 function entity_t:get_studio_hdr()
     local studio_hdr = ffi.cast('void**', self[0x2950])[0];
