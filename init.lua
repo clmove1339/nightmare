@@ -513,7 +513,7 @@ local visualization = {}; do
 
         local font = {
             icons = {
-                -- [16] = render.setup_font('nix/nightmare/nightmare.ttf', 16)
+                -- [16] = render.setup_font('nix/fonts/nightmare.ttf', 16)
                 [16] = render.setup_font('c:/windows/fonts/seguisb.ttf', 16)
             },
             text = {
