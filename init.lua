@@ -21,6 +21,7 @@ require 'libs.interfaces';
 require 'libs.entity';
 require 'libs.vector';
 require 'libs.render';
+require 'libs.vector';
 
 local engine_client = require 'libs.engine_client';
 local materials = require 'libs.material_system';
@@ -33,6 +34,7 @@ local utils = require 'libs.utils';
 local vmt = require 'libs.vmt';
 local ui = require 'libs.ui';
 
+local input = require 'libs.input';
 --#endregion
 
 --#region: Main
@@ -52,6 +54,7 @@ local aimbot = {}; do
 
         function jump_scout:threat_hittable()
             local me = entitylist.get_local_player();
+
             if not me then
                 return false;
             end;
@@ -103,8 +106,13 @@ local aimbot = {}; do
             cmd.sidemove = negated_direction.y;
         end;
 
-        function jump_scout:on_create_move()
+        function jump_scout:on_create_move(cmd)
             local me = entitylist.get_local_player();
+
+            nixware['Ragebot']['Target']['Scout'].min_damage:override(nil);
+            nixware['Ragebot']['Target']['Scout'].hit_chance:override(nil);
+            nixware['Movement']['Movement'].auto_strafer:override(nil);
+            nixware['Ragebot']['Target']['Scout'].auto_stop:override(nil);
 
             if not (me and me:is_alive()) then
                 return;
@@ -113,38 +121,30 @@ local aimbot = {}; do
             local weapon = me:get_active_weapon();
 
             if weapon ~= nil then
-                local networkable = ffi.cast('uintptr_t*', weapon + 8)[0];
-                local clientclass = ffi.cast('struct ClientClass*', ffi.cast('uintptr_t*', ffi.cast('uintptr_t*', networkable + 2 * 4)[0] + 1)[0]);
-                local network_name = ffi.string(clientclass.network_name);
-
-                if not network_name:find('SSG08') then
+                if not weapon:get_class_name():find('SSG08') then
                     return;
                 end;
 
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-                local in_air = bit.band(cmd.buttons, enum.buttons.in_jump) == enum.buttons.in_jump or bit.band(flags, enum.flags.onground) == 0;
+                local in_air = bit.band(cmd.buttons, IN.JUMP) == IN.JUMP or bit.band(flags, FL.ONGROUND) == 0;
 
-                local active = menu.aimbot.jump_scout:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
-                ui.find_check_box('Auto strafer [  ]', 'Movement/Movement'):set(not active);
+                if active then
+                    nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
+                    nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
 
-                if active and not ui.is_visible() then
-                    if not jump_scout.cache.active then
-                        jump_scout.cache.value = scout_hitchance:get();
-                        jump_scout.cache.active = true;
+                    if auto_stop:get() then
+                        nixware['Movement']['Movement'].auto_strafer:override(false);
+                        nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
+                        self:stop(cmd);
                     end;
-
-                    scout_hitchance:set(hitchance);
-                    fast_stop:stop(cmd);
-                elseif jump_scout.cache.active then
-                    scout_hitchance:set(jump_scout.cache.value);
-                    jump_scout.cache.active = false;
                 end;
             end;
         end;
 
         register_callback('create_move', function()
-            -- xpcall(jump_scout.on_create_move, print, jump_scout);
+            xpcall(jump_scout.on_create_move, print, jump_scout);
         end);
     end;
 end;
@@ -168,19 +168,19 @@ local antiaim = {}; do
         };
 
         -- Храни аллаха
-        enable:connect({
-            master = sub_handle,
-            [1] = {
-                master = features,
-                [2] = manual
-            }
-        }, true);
+        -- enable:connect({
+        --     master = sub_handle,
+        --     [1] = {
+        --         master = features,
+        --         [2] = manual
+        --     }
+        -- }, true);
 
-        -- features:depend({ { enable, true }, { sub_handle, 0 } });
-        -- manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        features:depend({ { enable, true }, { sub_handle, 0 } });
+        manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
