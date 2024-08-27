@@ -1,18 +1,27 @@
 netvars = {
-    m_lifeState = engine.get_netvar_offset('DT_BasePlayer', 'm_lifeState'),
-    m_hActiveWeapon = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hActiveWeapon'),
-    m_hMyWeapons = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hMyWeapons'),
-    m_iItemIDHigh = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh'),
-    m_nFallbackPaintKit = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit'),
-    m_flFallbackWear = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear'),
-    m_nFallbackSeed = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed'),
-    m_fFlags = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
-    m_flDuckAmount = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
-    m_vecVelocity = engine.get_netvar_offset('DT_BasePlayer', 'm_vecVelocity[0]'),
-    m_hGroundEntity = engine.get_netvar_offset('DT_BasePlayer', 'm_hGroundEntity'),
-    m_nTickBase = engine.get_netvar_offset('DT_BasePlayer', 'm_nTickBase'),
-    m_iTeamNum = engine.get_netvar_offset('DT_BaseEntity', 'm_iTeamNum'),
+    m_flNextPrimaryAttack = engine.get_netvar_offset('DT_BaseCombatWeapon', 'm_flNextPrimaryAttack'),
+    m_flNextAttack        = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_flNextAttack'),
+    m_lifeState           = engine.get_netvar_offset('DT_BasePlayer', 'm_lifeState'),
+    m_hActiveWeapon       = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hActiveWeapon'),
+    m_hMyWeapons          = engine.get_netvar_offset('DT_BaseCombatCharacter', 'm_hMyWeapons'),
+    m_iItemIDHigh         = engine.get_netvar_offset('DT_EconEntity', 'm_iItemIDHigh'),
+    m_nFallbackPaintKit   = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackPaintKit'),
+    m_flFallbackWear      = engine.get_netvar_offset('DT_EconEntity', 'm_flFallbackWear'),
+    m_nFallbackSeed       = engine.get_netvar_offset('DT_EconEntity', 'm_nFallbackSeed'),
+    m_fFlags              = engine.get_netvar_offset('DT_BasePlayer', 'm_fFlags'),
+    m_flDuckAmount        = engine.get_netvar_offset('DT_BasePlayer', 'm_flDuckAmount'),
+    m_vecVelocity         = engine.get_netvar_offset('DT_BasePlayer', 'm_vecVelocity[0]'),
+    m_hGroundEntity       = engine.get_netvar_offset('DT_BasePlayer', 'm_hGroundEntity'),
+    m_nTickBase           = engine.get_netvar_offset('DT_BasePlayer', 'm_nTickBase'),
+    m_iTeamNum            = engine.get_netvar_offset('DT_BaseEntity', 'm_iTeamNum'),
+    m_vecViewOffset       = 0x108
 };
+
+for k, v in pairs(netvars) do
+    if v == 0 then
+        error('NETVAR GOVNO DAVAI PO NOVOI');
+    end;
+end;
 
 ---@enum FrameStages
 FrameStages = {
@@ -31,7 +40,7 @@ nixware = {
         ['Target'] = {
             ['Scout'] = {
                 hit_chance = menu.find_slider_int('Hit chance', 'Ragebot/Target/Scout'),
-                auto_stop = menu.find_slider_int('Auto stop', 'Ragebot/Target/Scout'),
+                auto_stop = menu.find_check_box('Auto stop', 'Ragebot/Target/Scout'),
                 min_damage = menu.find_slider_int('Min damage', 'Ragebot/Target/Scout'),
             }
         }

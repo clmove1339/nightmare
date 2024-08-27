@@ -19,7 +19,9 @@
         ],
         "Lua.diagnostics.disable": [
             "undefined-global",
-            "lowercase-global"
+            "lowercase-global",
+            "need-check-nil",
+            "duplicate-set-field"
         ],
         "Lua.workspace.ignoreDir": [
             ".vscode",

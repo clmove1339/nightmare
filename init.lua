@@ -1,4 +1,5 @@
 --#region: package.path
+
 do
     local get_csgo_folder = function()
         local source = debug.getinfo(1, 'S').source:sub(2, -1);
@@ -9,24 +10,35 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?.lua;', csgo_folder);
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
+
 --#endregion
+
 --#region: Libraries
+
 require 'libs.enums';
 require 'libs.global';
 require 'libs.interfaces';
 require 'libs.entity';
+require 'libs.vector';
+require 'libs.render';
+require 'libs.vector';
 
+local engine_client = require 'libs.engine_client';
+local materials = require 'libs.material_system';
+local animation = require 'libs.animation';
 local defensive = require 'libs.defensive';
+local inspect = require 'libs.inspect';
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
-local ui = require 'libs.ui';
 local utils = require 'libs.utils';
-local engine_client = require 'libs.engine_client';
 local vmt = require 'libs.vmt';
-local inspect = require 'libs.inspect';
-local materials = require 'libs.material_system';
+local ui = require 'libs.ui';
+
+local input = require 'libs.input';
 --#endregion
+
 --#region: Main
+
 local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
@@ -42,6 +54,7 @@ local aimbot = {}; do
 
         function jump_scout:threat_hittable()
             local me = entitylist.get_local_player();
+
             if not me then
                 return false;
             end;
@@ -55,7 +68,7 @@ local aimbot = {}; do
                 local player = entities[i];
                 if player and player:is_alive() then
                     local player_team = player:get_team();
-                    local is_enemy = team ~= player_team;
+                    local is_enemy = my_team ~= player_team;
 
                     if player:is_visible() and is_enemy then
                         local distance = my_origin:dist(player:get_origin());
@@ -70,49 +83,68 @@ local aimbot = {}; do
             return false;
         end;
 
-        function jump_scout:on_create_move()
+        function jump_scout:stop(cmd)
             local me = entitylist.get_local_player();
+
+            if me == nil then
+                return;
+            end;
+
+            local velocity = me:get_velocity();
+            local direction = velocity:to_angle();
+            local speed = velocity:length2d();
+
+            if speed <= 15 then
+                return;
+            end;
+
+            direction.yaw = normalize_yaw(cmd.viewangles.yaw - direction.yaw);
+
+            local negated_direction = direction:forward() * -speed;
+
+            cmd.forwardmove = negated_direction.x;
+            cmd.sidemove = negated_direction.y;
+        end;
+
+        function jump_scout:on_create_move(cmd)
+            local me = entitylist.get_local_player();
+
+            nixware['Ragebot']['Target']['Scout'].min_damage:override(nil);
+            nixware['Ragebot']['Target']['Scout'].hit_chance:override(nil);
+            nixware['Movement']['Movement'].auto_strafer:override(nil);
+            nixware['Ragebot']['Target']['Scout'].auto_stop:override(nil);
 
             if not (me and me:is_alive()) then
                 return;
             end;
 
-            local hitchance = menu.aimbot.jump_scout_hitchance:get();
             local weapon = me:get_active_weapon();
 
             if weapon ~= nil then
-                local networkable = ffi.cast('uintptr_t*', weapon + 8)[0];
-                local clientclass = ffi.cast('struct ClientClass*', ffi.cast('uintptr_t*', ffi.cast('uintptr_t*', networkable + 2 * 4)[0] + 1)[0]);
-                local network_name = ffi.string(clientclass.network_name);
-
-                if not network_name:find('SSG08') then
+                if not weapon:get_class_name():find('SSG08') then
                     return;
                 end;
 
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-                local in_air = bit.band(cmd.buttons, enum.buttons.in_jump) == enum.buttons.in_jump or bit.band(flags, enum.flags.onground) == 0;
+                local in_air = bit.band(cmd.buttons, IN.JUMP) == IN.JUMP or bit.band(flags, FL.ONGROUND) == 0;
 
-                local active = menu.aimbot.jump_scout:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
-                ui.find_check_box('Auto strafer [  ]', 'Movement/Movement'):set(not active);
+                if active then
+                    nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
+                    nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
 
-                if active and not ui.is_visible() then
-                    if not jump_scout.cache.active then
-                        jump_scout.cache.value = scout_hitchance:get();
-                        jump_scout.cache.active = true;
+                    if auto_stop:get() then
+                        nixware['Movement']['Movement'].auto_strafer:override(false);
+                        nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
+                        self:stop(cmd);
                     end;
-
-                    scout_hitchance:set(hitchance);
-                    fast_stop:stop(cmd);
-                elseif jump_scout.cache.active then
-                    scout_hitchance:set(jump_scout.cache.value);
-                    jump_scout.cache.active = false;
                 end;
             end;
         end;
 
-        register_callback('create_move', function()
-            xpcall(jump_scout.on_create_move, print, jump_scout);
+        register_callback('create_move', function(cmd)
+            xpcall(jump_scout.on_create_move, print, jump_scout, cmd);
         end);
     end;
 end;
@@ -136,19 +168,19 @@ local antiaim = {}; do
         };
 
         -- Храни аллаха
-        enable:connect({
-            master = sub_handle,
-            [1] = {
-                master = features,
-                [2] = manual
-            }
-        }, true);
+        -- enable:connect({
+        --     master = sub_handle,
+        --     [1] = {
+        --         master = features,
+        --         [2] = manual
+        --     }
+        -- }, true);
 
-        -- features:depend({ { enable, true }, { sub_handle, 0 } });
-        -- manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
-        -- manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        features:depend({ { enable, true }, { sub_handle, 0 } });
+        manual.left:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.right:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.reset:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
+        manual.static:depend({ { enable, true }, { sub_handle, 0 }, { features, 1 } });
     end;
 
     local states = { 'Default', 'Standing', 'Running', 'Walking', 'Crouching', 'Sneaking', 'In Air', 'In Air & Crouching', 'On use' };
@@ -382,6 +414,61 @@ end;
 local visualization = {}; do
     ---@private
     local handle = ui.create('Visualization');
+
+    local widgets = {}; do
+        local master = handle:multicombo('Select widgets:', { 'Watermark', 'Keybinds', 'Spectators' });
+        local accent_color = handle:color('Accent color', color_t.new(1, 172 / 255, 172 / 255, 1), false);
+
+        local font = {
+            icons = {
+                [16] = render.setup_font('nix/nightmare/nightmare.ttf', 16)
+            },
+            text = {
+                [18] = render.setup_font('c:/windows/fonts/seguisb.ttf', 18, 32)
+            }
+        };
+
+        local function watermark()
+            local me = entitylist.get_local_player();
+
+            local enabled = master:get(0);
+            local alpha = animation:new('watermark_alpha', nil, enabled);
+            local margin = 8;
+
+            local color = accent_color:get();
+            local position = vec2_t.new(screen.x - 500, margin);
+            color.a = alpha;
+
+            if me and me:is_alive() then
+                local netchannel = engine_client:get_net_channel_info();
+                local latency = (netchannel:get_latency(0)) * 1000;
+            end;
+
+            local text = string.format('%s %s ms %s', get_user_name(), string.format('%.1f', latency and latency or 0.0), os.date('%I:%M'));
+            local icon = 'A';
+
+            local measure = {
+                icon = render.measure_text(font.icons[16], icon),
+                text = render.measure_text(font.text[18], text)
+            };
+
+            -- сорри, я не придумал как назвать переменную
+            local jopa = 3;
+            local height = measure.text.y + measure.icon.y + (jopa * 3) + (margin * 2);
+            local width = measure.text.x + (margin * 2);
+
+            position.x = screen.x - width - margin;
+
+            render.rect_filled(position, position + vec2_t.new(width, height), color_t.new(36 / 255, 36 / 255, 36 / 255, alpha), 4);
+            render.text(font.icons[16], position + vec2_t.new(width * .5, margin), color, 'c', icon);
+            render.rect_filled(position + vec2_t.new(margin, measure.icon.y + margin + (jopa * 2)), position + vec2_t.new(width - margin, measure.icon.y + margin + (jopa * 2) + 2), color_t.new(65 / 255, 65 / 255, 65 / 255, alpha));
+            render.text(font.text[18], position + vec2_t.new(margin, height - measure.text.y - margin), color_t.new(.9, .9, .9, alpha), '', text);
+        end;
+
+        register_callback('paint', function()
+            xpcall(watermark, print);
+        end);
+    end;
 
     local third_person = {}; do
         local old_value = cvars.cam_idealdist:get_int();
@@ -948,4 +1035,5 @@ local skinchanger = {}; do
         end);
     end;
 end;
+
 --#endregion

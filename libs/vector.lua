@@ -3,6 +3,7 @@
 -- я не знаю нуу вроде вот, добавьте нужные методы, если их тут нет
 -- upd: БАНАН НАПИШИ ТАЙПИНГИ, ОНО ПОЧЕМУ-ТО НЕ ВИДИТ ТО ЧТО У ЕБУЧЕГО vec3_t ПОЯВИЛСЯ :length() и т.д.
 -- upd: ГОТОВО БОСС
+-- upd: ЕЩЕ РАЗ ТЫ ТРОНЕШЬ МОЕГО ЕНОТА
 
 --#region: vec2_t
 ---@diagnostic disable-next-line: circle-doc-class
@@ -187,3 +188,14 @@ function vec3_t:dist(vector)
 end;
 
 --#endregion
+
+---@diagnostic disable-next-line: circle-doc-class
+---@class angle_t: angle_t
+---@field forward fun(self: angle_t): vec3_t Returns the normalized vector representing the direction of this vector.
+
+function angle_t:forward()
+    local pitch_rad = math.rad(self.pitch);
+    local yaw_rad = math.rad(self.yaw);
+
+    return vec3_t.new(math.cos(pitch_rad) * math.cos(yaw_rad), math.cos(pitch_rad) * math.sin(yaw_rad), -math.sin(pitch_rad));
+end;
