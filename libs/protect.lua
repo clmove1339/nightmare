@@ -47,10 +47,10 @@ end;
 
 ---@param fn function
 ---@param args table
----@param should_be_lua boolean
+---@param is_lua boolean
 ---@param signature? string
----@return boolean, string
-local function is_function_hooked(fn, args, should_be_lua, signature)
+---@return boolean, string?
+local function is_function_hooked(fn, args, is_lua, signature)
     local can_be_dumped, dump_result = pcall(string.dump, fn);
     local is_c_function = debug.getinfo(fn, 'S').what == 'C';
     local is_builtin_function = tostring(fn):find('builtin') ~= nil;
@@ -91,7 +91,7 @@ local function is_function_hooked(fn, args, should_be_lua, signature)
         return true, 'invalid variable error';
     end;
 
-    if not should_be_lua and not by_hook_check then
+    if not is_lua and not by_hook_check then
         return true, 'debug.sethook error';
     end;
 
@@ -99,7 +99,7 @@ local function is_function_hooked(fn, args, should_be_lua, signature)
         if setfenv_result:find('table') then
             return true, 'setfenv error';
         end;
-        if should_be_lua then
+        if is_lua then
             return true, 'setfenv error';
         end;
     end;
@@ -116,7 +116,7 @@ local function is_function_hooked(fn, args, should_be_lua, signature)
         return true, 'address error';
     end;
 
-    if defined_in_c == should_be_lua then
+    if defined_in_c == is_lua then
         return true, 'definition error';
     end;
 
@@ -134,15 +134,15 @@ local function is_function_hooked(fn, args, should_be_lua, signature)
         return true, 'type error';
     end;
 
-    if is_c_function and should_be_lua then
+    if is_c_function and is_lua then
         return true, 'debug.getinfo error';
     end;
 
-    if can_be_dumped and not should_be_lua then
+    if can_be_dumped ~= is_lua then
         return true, 'string.dump error';
     end;
 
-    if should_be_lua == is_builtin_function then
+    if is_lua == is_builtin_function then
         return true, 'tostring error';
     end;
 
