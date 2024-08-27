@@ -838,82 +838,25 @@ local misc = {}; do
 end;
 
 local skinchanger = {}; do
-    local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
-
     local weapon_data = require 'libs.weapon_skins';
+
     local weapon_names = {
-        'weapon_ak47',
-        'weapon_aug',
-        'weapon_awp',
-        'weapon_bizon',
-        'weapon_cz75a',
-        'weapon_deagle',
-        'weapon_elite',
-        'weapon_famas',
-        'weapon_fiveseven',
-        'weapon_g3sg1',
-        'weapon_galilar',
-        'weapon_glock',
-        'weapon_m249',
-        'weapon_m4a1',
-        'weapon_m4a1_silencer',
-        'weapon_mac10',
-        'weapon_mag7',
-        'weapon_mp5sd',
-        'weapon_mp7',
-        'weapon_mp9',
-        'weapon_negev',
-        'weapon_nova',
-        'weapon_hkp2000',
-        'weapon_p250',
-        'weapon_p90',
-        'weapon_revolver',
-        'weapon_sawedoff',
-        'weapon_scar20',
-        'weapon_ssg08',
-        'weapon_sg556',
-        'weapon_tec9',
-        'weapon_ump45',
-        'weapon_usp_silencer',
-        'weapon_xm1014'
+        'weapon_ak47', 'weapon_aug', 'weapon_awp', 'weapon_bizon', 'weapon_cz75a', 'weapon_deagle',
+        'weapon_elite', 'weapon_famas', 'weapon_fiveseven', 'weapon_g3sg1', 'weapon_galilar', 'weapon_glock',
+        'weapon_m249', 'weapon_m4a1', 'weapon_m4a1_silencer', 'weapon_mac10', 'weapon_mag7', 'weapon_mp5sd',
+        'weapon_mp7', 'weapon_mp9', 'weapon_negev', 'weapon_nova', 'weapon_hkp2000', 'weapon_p250', 'weapon_p90',
+        'weapon_revolver', 'weapon_sawedoff', 'weapon_scar20', 'weapon_ssg08', 'weapon_sg556', 'weapon_tec9',
+        'weapon_ump45', 'weapon_usp_silencer', 'weapon_xm1014'
     };
 
     local formatted_weapon_names = {
-        'AK-47',
-        'AUG',
-        'AWP',
-        'PP-Bizon',
-        'CZ75-Auto',
-        'Desert Eagle',
-        'Dual Berettas',
-        'FAMAS',
-        'Five-SeveN',
-        'G3SG1',
-        'Galil AR',
-        'Glock-18',
-        'M249',
-        'M4A4',
-        'M4A1-S',
-        'MAC-10',
-        'MAG-7',
-        'MP5-SD',
-        'MP7',
-        'MP9',
-        'Negev',
-        'Nova',
-        'P2000',
-        'P250',
-        'P90',
-        'R8 Revolver',
-        'Sawed-Off',
-        'SCAR-20',
-        'SSG 08',
-        'SG 553',
-        'Tec-9',
-        'UMP-45',
-        'USP-S',
-        'XM1014'
+        'AK-47', 'AUG', 'AWP', 'PP-Bizon', 'CZ75-Auto', 'Desert Eagle', 'Dual Berettas', 'FAMAS', 'Five-SeveN',
+        'G3SG1', 'Galil AR', 'Glock-18', 'M249', 'M4A4', 'M4A1-S', 'MAC-10', 'MAG-7', 'MP5-SD', 'MP7', 'MP9',
+        'Negev', 'Nova', 'P2000', 'P250', 'P90', 'R8 Revolver', 'Sawed-Off', 'SCAR-20', 'SSG 08', 'SG 553',
+        'Tec-9', 'UMP-45', 'USP-S', 'XM1014'
     };
+
+    local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
     local weapon2index = {};
 
@@ -922,7 +865,6 @@ local skinchanger = {}; do
     end;
 
     local handle = ui.create('Skinchanger');
-
     local gui = {
         weapons = {},
         weapon_selector = handle:combo('Weapon selector', formatted_weapon_names),
@@ -933,6 +875,7 @@ local skinchanger = {}; do
             skin = handle:combo('Skin selector##' .. name, weapon_data[name].skin_names),
             wear = handle:slider_float('Wear ##' .. name, 0.001, 1.0, 0.001),
             seed = handle:slider_int('Seed ##' .. name, 1, 1000, 1),
+            custom_color = handle:switch('Custom color ##' .. name),
 
             handle:color('Color 1##' .. name, nil, true, false),
             handle:color('Color 2##' .. name, nil, true, false),
@@ -941,17 +884,14 @@ local skinchanger = {}; do
         };
 
         for _, element in pairs(weapon_config) do
-            element:depend({ { gui.weapon_selector, i - 1 } });
+            element:depend({ { gui.weapon_selector, i - 1 }, type(_) == 'number' and { weapon_config.custom_color, true } or nil });
         end;
 
         gui.weapons[name] = weapon_config;
     end;
 
     local schema, paint_kit_color; do
-        local ffi = require('ffi');
-
-        --read mem
-        local read = function(typename, address)
+        local function read(typename, address)
             if address == nil then
                 return function(address)
                     return ffi.cast(ffi.typeof(typename .. '*'), ffi.cast('uint32_t ', address))[0];
@@ -960,7 +900,7 @@ local skinchanger = {}; do
             return ffi.cast(ffi.typeof(typename .. '*'), ffi.cast('uint32_t ', address))[0];
         end;
 
-        local follow_call = function(ptr)
+        local function follow_call(ptr)
             local insn = ffi.cast('uint8_t*', ptr);
 
             if insn[0] == 0xE8 then
@@ -978,30 +918,26 @@ local skinchanger = {}; do
             end;
         end;
 
-        local string_t = [[struct {
-            char* buffer;
-            int capacity;
-            int grow_size;
-            int length;
-        }]];
-
-        local paint_kit_t = [[struct {
-            int nID;
-            ]] .. string_t .. [[ name;
-            ]] .. string_t .. [[ description;
-            ]] .. string_t .. [[ tag;
-            ]] .. string_t .. [[ same_name_family_aggregate;
-            ]] .. string_t .. [[ pattern;
-            ]] .. string_t .. [[ normal;
-            ]] .. string_t .. [[ logoMaterial;
-            bool baseDiffuseOverride;
-            int rarity;
-            int style;
-            uint8_t color[4][4];
-            char pad[35];
-            float wearRemapMin;
-            float wearRemapMax;
-        }]];
+        local string_t = [[struct { char* buffer; int capacity; int grow_size; int length; }]];
+        local paint_kit_t = string.format([[
+            struct {
+                int nID;
+                %s name;
+                %s description;
+                %s tag;
+                %s same_name_family_aggregate;
+                %s pattern;
+                %s normal;
+                %s logoMaterial;
+                bool baseDiffuseOverride;
+                int rarity;
+                int style;
+                uint8_t color[4][4];
+                char pad[35];
+                float wearRemapMin;
+                float wearRemapMax;
+            }
+        ]], string_t, string_t, string_t, string_t, string_t, string_t, string_t);
 
         local create_map_t = function(key_type, value_type)
             return ffi.typeof([[struct {
@@ -1033,8 +969,7 @@ local skinchanger = {}; do
             }]], ffi.typeof(key_type), ffi.typeof(value_type), ffi.typeof(key_type), ffi.typeof(value_type));
         end;
 
-        item_schema_t = ffi.typeof([[struct { $ paint_kits; }*]], create_map_t('int', paint_kit_t .. '*'));
-
+        local item_schema_t = ffi.typeof([[struct { $ paint_kits; }*]], create_map_t('int', paint_kit_t .. '*'));
         local get_item_schema_addr = find_pattern('client.dll', ' A1 ? ? ? ? 85 C0 75 53') or error('cant find get_item_scham()');
         local get_item_schema_fn = ffi.cast('uint32_t(__stdcall*)()', get_item_schema_addr);
 
@@ -1048,23 +983,23 @@ local skinchanger = {}; do
             obj[3] = c.a * 255;
         end;
 
-        local item_schema_c = {};
+        local item_schema_c = {}; do
+            function item_schema_c.create(ptr)
+                return setmetatable({
+                    ptr = ptr,
+                }, {
+                    __index = item_schema_c,
+                    __metatable = 'item_schema'
+                });
+            end;
 
-        function item_schema_c.create(ptr)
-            return setmetatable({
-                ptr = ptr,
-            }, {
-                __index = item_schema_c,
-                __metatable = 'item_schema'
-            });
-        end;
+            function item_schema_c:get_paint_kit(index)
+                local paint_kit_addr = get_paint_kit_definition_fn(self.ptr, index);
+                if paint_kit_addr == nil then return; end;
 
-        function item_schema_c:get_paint_kit(index)
-            local paint_kit_addr = get_paint_kit_definition_fn(self.ptr, index);
-            if paint_kit_addr == nil then return; end;
-
-            ---@diagnostic disable-next-line: param-type-mismatch
-            return ffi.cast(ffi.typeof(paint_kit_t .. '*'), paint_kit_addr);
+                ---@diagnostic disable-next-line: param-type-mismatch
+                return ffi.cast(ffi.typeof(paint_kit_t .. '*'), paint_kit_addr);
+            end;
         end;
 
         schema = item_schema_c.create(ffi.cast(item_schema_t, get_item_schema_fn() + 4));
@@ -1073,142 +1008,210 @@ local skinchanger = {}; do
     local m_nDeltaTick = ffi.cast('int*', ffi.cast('uintptr_t', ffi.cast('uintptr_t***', (ffi.cast('uintptr_t**', memory:create_interface('engine.dll', 'VEngineClient014'))[0][12] + 16))[0][0]) + 0x0174);
 
     local paint_kits = {};
-    local paint_kits_cache = {};
+    local default_paint_kits = {};
     color_t.__eq = function(s, o) return s.r == o.r and s.g == o.g and s.b == o.b and s.a == o.a; end;
 
-    local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018')); do
-        local update_skin = function(weapon)
-            local item_id_high = ffi.cast('int*', weapon + netvars.m_iItemIDHigh);
-            local fallback_paint_kit = ffi.cast('int*', weapon + netvars.m_nFallbackPaintKit);
-            local fallback_wear = ffi.cast('float*', weapon + netvars.m_flFallbackWear);
-            local fallback_seed = ffi.cast('int*', weapon + netvars.m_nFallbackSeed);
+    local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018'));
 
-            local weapon_info = native_GetWeaponInfo(weapon);
+    local KNIFE_IDXs = {
+        WEAPON_KNIFE_BAYONET = 500,
+        WEAPON_KNIFE_CSS = 503,
+        WEAPON_KNIFE_FLIP = 505,
+        WEAPON_KNIFE_GUT = 506,
+        WEAPON_KNIFE_KARAMBIT = 507,
+        WEAPON_KNIFE_M9_BAYONET = 508,
+        WEAPON_KNIFE_TACTICAL = 509,
+        WEAPON_KNIFE_FALCHION = 512,
+        WEAPON_KNIFE_SURVIVAL_BOWIE = 514,
+        WEAPON_KNIFE_BUTTERFLY = 515,
+        WEAPON_KNIFE_PUSH = 516,
+        WEAPON_KNIFE_CORD = 517,
+        WEAPON_KNIFE_CANIS = 518,
+        WEAPON_KNIFE_URSUS = 519,
+        WEAPON_KNIFE_GYPSY_JACKKNIFE = 520,
+        WEAPON_KNIFE_OUTDOOR = 521,
+        WEAPON_KNIFE_STILETTO = 522,
+        WEAPON_KNIFE_WIDOWMAKER = 523,
+        WEAPON_KNIFE_SKELETON = 525,
+    };
 
-            if not weapon_info then
-                return;
+    local KNIFE_MDLs = {
+        [KNIFE_IDXs.WEAPON_KNIFE_BAYONET] = 'models/weapons/v_knife_bayonet.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_FLIP] = 'models/weapons/v_knife_flip.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_GUT] = 'models/weapons/v_knife_gut.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_KARAMBIT] = 'models/weapons/v_knife_karam.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET] = 'models/weapons/v_knife_m9_bay.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_TACTICAL] = 'models/weapons/v_knife_tactical.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_FALCHION] = 'models/weapons/v_knife_falchion_advanced.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_SURVIVAL_BOWIE] = 'models/weapons/v_knife_survival_bowie.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_BUTTERFLY] = 'models/weapons/v_knife_butterfly.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_PUSH] = 'models/weapons/v_knife_push.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_URSUS] = 'models/weapons/v_knife_ursus.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_GYPSY_JACKKNIFE] = 'models/weapons/v_knife_gypsy_jackknife.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_STILETTO] = 'models/weapons/v_knife_stiletto.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_WIDOWMAKER] = 'models/weapons/v_knife_widowmaker.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_CSS] = 'models/weapons/v_knife_css.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_CORD] = 'models/weapons/v_knife_cord.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_CANIS] = 'models/weapons/v_knife_canis.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_OUTDOOR] = 'models/weapons/v_knife_outdoor.mdl',
+        [KNIFE_IDXs.WEAPON_KNIFE_SKELETON] = 'models/weapons/v_knife_skeleton.mdl',
+    };
+
+    local WEAPON_KNIFE_DEF_IDX = KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET;
+    local WEAPON_KNIFE_MDL_PATH = KNIFE_MDLs[WEAPON_KNIFE_DEF_IDX];
+
+    local native_GetModelIndex = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 2, 'int(__thiscall*)(void*, const char*)');
+    local native_SetModelIndex = memory:get_vfunc(75, 'void(__thiscall*)(void*, int)');
+
+    local WEAPON_KNIFE_MDL_IDX = native_GetModelIndex(WEAPON_KNIFE_MDL_PATH);
+
+    local function set_model(weapon, model_index, item_index)
+        ffi.cast('int*', weapon + netvars.m_iEntityQuality)[0] = 3;
+        ffi.cast('int*', weapon + netvars.m_iItemDefinitionIndex)[0] = item_index;
+        ffi.cast('int*', weapon + netvars.m_nModelIndex)[0] = model_index;
+        native_SetModelIndex(ffi.cast('void*', weapon), model_index);
+    end;
+
+    local function apply_skin(weapon, weapon_info)
+        local weapon_name = ffi.string(weapon_info.ConsoleName);
+        local gui_weapon = gui.weapons[weapon_name];
+        if not gui_weapon then return; end;
+
+        local selected_skin = gui_weapon.skin:get();
+        local wear = gui_weapon.wear:get();
+        local seed = gui_weapon.seed:get();
+        local custom_color = gui_weapon.custom_color:get();
+
+        local skin_name = weapon_data[weapon_name].skin_names[selected_skin + 1];
+        local skin_id = weapon_data[weapon_name].skin_ids[skin_name];
+        if not skin_id then return; end;
+
+        local paint_kit = paint_kits[skin_id] or schema:get_paint_kit(skin_id);
+        paint_kits[skin_id] = paint_kit;
+
+        local cache = default_paint_kits[weapon_name] or {};
+        default_paint_kits[weapon_name] = cache;
+        cache[skin_id] = cache[skin_id] or {};
+
+        for x = 1, 4 do
+            local ref = gui.weapons[weapon_name][x];
+
+            ---@diagnostic disable-next-line: need-check-nil, undefined-field
+            local kit_color = paint_kit.color[x - 1];
+
+            if (default_paint_kits[weapon_name][skin_id][x] == nil) then
+                default_paint_kits[weapon_name][skin_id][x] = color_t.new(kit_color[0] / 255, kit_color[1] / 255, kit_color[2] / 255, kit_color[3] / 255);
+
+                ref:set(default_paint_kits[weapon_name][skin_id][x]);
             end;
 
-            local weapon_name = ffi.string(weapon_info.ConsoleName);
+            local color = custom_color and ref:get() or default_paint_kits[weapon_name][skin_id][x];
 
-            if not gui.weapons[weapon_name] then
-                return;
-            end;
+            ref:set(color);
 
-            local selected_skin = gui.weapons[weapon_name].skin:get();
-            local wear = gui.weapons[weapon_name].wear:get();
-            local seed = gui.weapons[weapon_name].seed:get();
-
-            local skin_name = weapon_data[weapon_name].skin_names[selected_skin + 1];
-            local skin_id = weapon_data[weapon_name].skin_ids[skin_name];
-
-            if not skin_id then
-                return;
-            end;
-
-            local paint_kit = paint_kits[skin_id] or schema:get_paint_kit(skin_id);
-            paint_kits[skin_id] = paint_kit;
-
-            if (paint_kits_cache[weapon_name] == nil) then
-                paint_kits_cache[weapon_name] = {};
-            end;
-
-            if (paint_kits_cache[weapon_name][skin_id] == nil) then
-                paint_kits_cache[weapon_name][skin_id] = {};
-            end;
-
-            for x = 1, 4 do
-                local ref = gui.weapons[weapon_name][x];
-
-                ---@diagnostic disable-next-line: need-check-nil, undefined-field
-                local kit_color = paint_kit.color[x - 1];
-
-                if (paint_kits_cache[weapon_name][skin_id][x] == nil) then
-                    paint_kits_cache[weapon_name][skin_id][x] = color_t.new(kit_color[0] / 255, kit_color[1] / 255, kit_color[2] / 255, kit_color[3] / 255);
-
-                    ref:set(paint_kits_cache[weapon_name][skin_id][x]);
-                end;
-
-                local ref_value = ref:get();
-
-                if (paint_kits_cache[weapon_name][skin_id][x] ~= ref_value) then
-                    paint_kits_cache[weapon_name][skin_id][x] = ref_value;
-                end;
-            end;
-
-            if (item_id_high[0] ~= -1 or fallback_paint_kit[0] ~= skin_id or fallback_wear[0] ~= wear or fallback_seed[0] ~= seed) then
-                item_id_high[0] = -1;
-                fallback_paint_kit[0] = skin_id;
-                fallback_wear[0] = wear;
-                fallback_seed[0] = seed;
-
-                for x = 1, 4 do
-                    ---@diagnostic disable-next-line: need-check-nil, undefined-field
-                    local kit_color = paint_kit.color[x - 1];
-
-                    paint_kit_color(kit_color, paint_kits_cache[weapon_name][skin_id][x]);
-                end;
-
-                m_nDeltaTick[0] = -1;
-            end;
+            paint_kit_color(kit_color, color);
         end;
 
-        IBaseClientDLL:attach(37, 'void(__stdcall*)(int stage)', function(stage)
-            xpcall(function()
-                if (stage ~= FrameStages.FRAME_NET_UPDATE_POSTDATAUPDATE_START) then
-                    return;
-                end;
+        local item_id_high = ffi.cast('int*', weapon + netvars.m_iItemIDHigh);
+        local fallback_paint_kit = ffi.cast('int*', weapon + netvars.m_nFallbackPaintKit);
+        local fallback_wear = ffi.cast('float*', weapon + netvars.m_flFallbackWear);
+        local fallback_seed = ffi.cast('int*', weapon + netvars.m_nFallbackSeed);
 
-                local me = entitylist.get(engine_client:get_local_player());
+        if item_id_high[0] ~= -1 or fallback_paint_kit[0] ~= skin_id or fallback_wear[0] ~= wear or fallback_seed[0] ~= seed then
+            item_id_high[0] = -1;
+            fallback_paint_kit[0] = skin_id;
+            fallback_wear[0] = wear;
+            fallback_seed[0] = seed;
 
-                if (me == nil or not me:is_alive()) then
-                    return;
-                end;
+            m_nDeltaTick[0] = -1;
+        end;
+    end;
 
-                local my_weapons = ffi.cast('int*', me[netvars.m_hMyWeapons]);
+    local function apply_knife_skin(me, weapon)
+        local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
+        if not weapon_handle then return; end;
 
-                for i = 0, 10 do
-                    local weapon_handle = my_weapons[i];
+        local active_weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
+        if not active_weapon then return; end;
 
-                    if (weapon_handle ~= -1) then
-                        local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle);
+        set_model(weapon, WEAPON_KNIFE_MDL_IDX, WEAPON_KNIFE_DEF_IDX);
 
-                        update_skin(weapon);
+        local view_model_handle = ffi.cast('int*', me[netvars.m_hViewModel])[0];
+        if view_model_handle == -1 then return; end;
+
+        local view_model = IClientEntityList:GetClientEntityFromHandle(view_model_handle);
+        if active_weapon == weapon then
+            ffi.cast('int*', view_model + netvars.m_nModelIndex)[0] = WEAPON_KNIFE_MDL_IDX;
+        end;
+    end;
+
+    local function skin_changer(me)
+        local my_weapons = ffi.cast('int*', me[netvars.m_hMyWeapons]);
+        for i = 0, 10 do
+            local weapon_handle = my_weapons[i];
+            if weapon_handle ~= -1 then
+                local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle);
+                if weapon then
+                    local weapon_info = native_GetWeaponInfo(weapon);
+                    if weapon_info then
+                        local weapon_name = ffi.string(weapon_info.ConsoleName);
+                        if gui.weapons[weapon_name] then
+                            apply_skin(weapon, weapon_info);
+                        elseif weapon_name:find('knife') then
+                            apply_knife_skin(me, weapon);
+                        end;
                     end;
                 end;
-
-                local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
-
-                if (weapon_handle == nil) then
-                    return;
-                end;
-
-                local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
-
-                if (weapon == nil) then
-                    return;
-                end;
-
-                local weapon_info = native_GetWeaponInfo(weapon);
-
-                if not weapon_info then
-                    return;
-                end;
-
-                local weapon_name = ffi.string(weapon_info.ConsoleName);
-
-                if not gui.weapons[weapon_name] then
-                    return;
-                end;
-
-                if (not menu.is_visible() or not gui.weapon_selector:is_visible()) then
-                    gui.weapon_selector:set(weapon2index[weapon_name]);
-                end;
-            end, print);
-
-            IBaseClientDLL:get_original(37)(stage);
-        end);
+            end;
+        end;
     end;
+
+    local function menu_handler(me)
+        local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
+        if not weapon_handle then return; end;
+
+        local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
+        if not weapon then return; end;
+
+        local weapon_info = native_GetWeaponInfo(weapon);
+        if not weapon_info then return; end;
+
+        local weapon_name = ffi.string(weapon_info.ConsoleName);
+        if not gui.weapons[weapon_name] then return; end;
+
+        if not menu.is_visible() or not gui.weapon_selector:is_visible() then
+            gui.weapon_selector:set(weapon2index[weapon_name]);
+        end;
+    end;
+
+    IBaseClientDLL:attach(37, 'void(__stdcall*)(int stage)', function(stage)
+        IBaseClientDLL:get_original(37)(stage);
+
+        xpcall(function()
+            if stage == FrameStages.FRAME_NET_UPDATE_POSTDATAUPDATE_START then
+                local me = entitylist.get(engine_client:get_local_player());
+                if me and me:is_alive() then
+                    skin_changer(me);
+                    menu_handler(me);
+                end;
+            end;
+        end, print);
+    end);
+
+    register_callback('unload', function()
+        xpcall(function()
+            for _, paint_kit_list in pairs(default_paint_kits) do
+                for skin_id, colors in pairs(paint_kit_list) do
+                    local paint_kit = paint_kits[skin_id];
+
+                    for x, color in ipairs(colors) do
+                        local kit_color = paint_kit.color[x - 1];
+                        paint_kit_color(kit_color, color);
+                    end;
+                end;
+            end;
+        end, print);
+    end);
 end;
 
 --#endregion
