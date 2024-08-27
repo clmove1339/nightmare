@@ -820,7 +820,6 @@ local misc = {}; do
     end;
 
     local supertoss = {}; do
-
     end;
 
     local console_filter; do

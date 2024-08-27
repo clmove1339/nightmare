@@ -59,6 +59,21 @@ local native_get_poseparams = ffi.cast('pose_parameters_t*(__thiscall*)(void*, i
 local native_GetModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 1, 'void*(__thiscall*)(void*, int)');
 local native_GetStudioModel = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 32, 'StudioHdr*(__thiscall*)(void*, void*)');
 local native_GetPlayerInfo = memory:get_vfunc('engine.dll', 'VEngineClient014', 8, 'bool(__thiscall*)(void*, int, void*)');
+local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
+
+function entity_t:get_weapon_info()
+    return native_GetWeaponInfo(ffi.cast('uintptr_t*', self[0])[0]);
+end;
+
+function entity_t:is_grenade()
+    local weapon_class = self:get_class_name():lower();
+
+    if weapon_class:find('nade') then
+        return true;
+    end;
+
+    return false;
+end;
 
 function entity_t:get_player_info()
     local player_info_t_ctype = ffi.new('player_info_t');
