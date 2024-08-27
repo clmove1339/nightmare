@@ -5,7 +5,7 @@ local cache = {
 };
 
 local animation = {}; do
-    --- @private
+    ---@private
     local native_GetTimescale = memory:get_vfunc('engine.dll', 'VEngineClient014', 91, 'float(__thiscall*)(void*)');
 
     local abs, floor, ceil = math.abs, math.floor, math.ceil;
@@ -43,7 +43,7 @@ local animation = {}; do
         return globals.frame_time / native_GetTimescale();
     end;
 
-    --- @public
+    ---@public
     ---@param a number
     ---@param b number|boolean
     ---@param t number

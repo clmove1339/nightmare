@@ -1,3 +1,5 @@
+local LOAD_TIME = os.clock();
+
 --#region: package.path
 
 do
@@ -33,8 +35,8 @@ local memory = require 'libs.memory';
 local utils = require 'libs.utils';
 local vmt = require 'libs.vmt';
 local ui = require 'libs.ui';
-
 local input = require 'libs.input';
+
 --#endregion
 
 --#region: Main
@@ -44,8 +46,6 @@ local aimbot = {}; do
     local handle = ui.create('Aimbot');
 
     local jump_scout = {}; do
-        -- где нах :get_active_weapon и :is_visible
-        -- когда добавите тогда почешем яйца
         local group, enable = handle:switch('Jump scout', nil, true);
 
         local auto_stop = group:switch('Auto stop', true, false);
@@ -169,7 +169,6 @@ local antiaim = {}; do
             static = handle:switch('Use static on manual'),
         };
 
-        -- АЛЛАХ ВЕЛИК
         sub_handle:connect({
             master = features,
             [2] = manual
@@ -502,11 +501,12 @@ local visualization = {}; do
 
     local widgets = {}; do
         local master = handle:multicombo('Select widgets:', { 'Watermark', 'Keybinds', 'Spectators' });
-        local accent_color = handle:color('Accent color', color_t.new(1, 172 / 255, 172 / 255, 1), false);
+        local accent_color = handle:color('Accent color', color_t.new(0.647, 0.813, 1, 1), false);
 
         local font = {
             icons = {
-                [16] = render.setup_font('nix/nightmare/nightmare.ttf', 16)
+                -- [16] = render.setup_font('nix/nightmare/nightmare.ttf', 16)
+                [16] = render.setup_font('c:/windows/fonts/seguisb.ttf', 16)
             },
             text = {
                 [18] = render.setup_font('c:/windows/fonts/seguisb.ttf', 18, 32)
@@ -514,44 +514,55 @@ local visualization = {}; do
         };
 
         local function watermark()
-            local me = entitylist.get_local_player();
+            local local_player = entitylist.get_local_player();
 
-            local enabled = master:get(0);
-            local alpha = animation:new('watermark_alpha', nil, enabled);
+            local alpha_anim = animation:new('watermark_alpha', nil, master:get(0));
             local margin = 8;
 
-            local color = accent_color:get();
-            local position = vec2_t.new(screen.x - 500, margin);
-            color.a = alpha;
+            local accent_color = accent_color:get();
+            accent_color.a = alpha_anim;
 
-            if me and me:is_alive() then
-                local netchannel = engine_client:get_net_channel_info();
-                local latency = (netchannel:get_latency(0)) * 1000;
+            local position = vec2_t.new(screen.x - 500, margin);
+
+            local latency = 0;
+            if local_player and local_player:is_alive() then
+                local net_channel = engine_client:get_net_channel_info();
+                latency = (net_channel:get_latency(0)) * 1000;
             end;
 
-            local text = string.format('%s %s ms %s', get_user_name(), string.format('%.1f', latency and latency or 0.0), os.date('%I:%M'));
-            local icon = 'A';
+            local user_name = get_user_name();
+            local current_time = os.date('%I:%M %p');
+            local formatted_latency = string.format('%.1f ms', latency);
+            local watermark_text = string.format(' %s \a414141ff|\adefault %s \a414141ff|\adefault %s ', user_name, formatted_latency, current_time);
 
-            local measure = {
-                icon = render.measure_text(font.icons[16], icon),
-                text = render.measure_text(font.text[18], text)
-            };
+            local icon = 'СИСЬКИ ПОПКИ КАКАЩЬКЕ';
+            local text_size = render.measure_text(font.text[18], watermark_text);
+            local icon_size = render.measure_text(font.icons[16], icon);
 
-            -- сорри, я не придумал как назвать переменную
-            local jopa = 3;
-            local height = measure.text.y + measure.icon.y + (jopa * 3) + (margin * 2);
-            local width = measure.text.x + (margin * 2);
+            local padding = 10;
+            local height = text_size.y + icon_size.y + (padding * 2) + (margin * 2);
+            local width = text_size.x + (margin * 2);
 
             position.x = screen.x - width - margin;
 
-            render.rect_filled(position, position + vec2_t.new(width, height), color_t.new(36 / 255, 36 / 255, 36 / 255, alpha), 4);
-            render.text(font.icons[16], position + vec2_t.new(width * .5, margin), color, 'c', icon);
-            render.rect_filled(position + vec2_t.new(margin, measure.icon.y + margin + (jopa * 2)), position + vec2_t.new(width - margin, measure.icon.y + margin + (jopa * 2) + 2), color_t.new(65 / 255, 65 / 255, 65 / 255, alpha));
-            render.text(font.text[18], position + vec2_t.new(margin, height - measure.text.y - margin), color_t.new(.9, .9, .9, alpha), '', text);
+            local background_color = color_t.new(0.12, 0.12, 0.12, alpha_anim);
+            local divider_color = color_t.new(0.25, 0.25, 0.25, alpha_anim);
+            local border_radius = 6;
+
+            render.rect_filled(position, position + vec2_t.new(width, height), background_color, border_radius);
+            render.rect(position + 1, position + vec2_t.new(width, height) - 1, divider_color, border_radius, 2);
+
+            render.text(font.icons[16], position + vec2_t.new(width * 0.5, margin), accent_color, 'c', icon);
+
+            local divider_start = position + vec2_t.new(margin, icon_size.y + margin + padding);
+            local divider_end = position + vec2_t.new(width - margin, icon_size.y + margin + padding + 2);
+            render.rect_filled(divider_start, divider_end, divider_color);
+
+            render.text(font.text[18], position + vec2_t.new(margin, height - text_size.y - margin), color_t.new(0.9, 0.9, 0.9, alpha_anim), '', watermark_text);
         end;
 
         register_callback('paint', function()
-            -- xpcall(watermark, print);
+            xpcall(watermark, print);
         end);
     end;
 
@@ -762,15 +773,15 @@ local skinchanger = {}; do
         'weapon_bizon',
         'weapon_cz75a',
         'weapon_deagle',
-        'weapon_elite', -- Dual Berettas
+        'weapon_elite',
         'weapon_famas',
         'weapon_fiveseven',
         'weapon_g3sg1',
-        'weapon_galilar', -- Galil AR
+        'weapon_galilar',
         'weapon_glock',
         'weapon_m249',
-        'weapon_m4a1',          -- M4A4
-        'weapon_m4a1_silencer', -- M4A1-S
+        'weapon_m4a1',
+        'weapon_m4a1_silencer',
         'weapon_mac10',
         'weapon_mag7',
         'weapon_mp5sd',
@@ -778,17 +789,17 @@ local skinchanger = {}; do
         'weapon_mp9',
         'weapon_negev',
         'weapon_nova',
-        'weapon_hkp2000', -- P2000
+        'weapon_hkp2000',
         'weapon_p250',
         'weapon_p90',
-        'weapon_revolver', -- R8 Revolver
+        'weapon_revolver',
         'weapon_sawedoff',
         'weapon_scar20',
         'weapon_ssg08',
-        'weapon_sg556', -- SG 553
+        'weapon_sg556',
         'weapon_tec9',
         'weapon_ump45',
-        'weapon_usp_silencer', -- USP-S
+        'weapon_usp_silencer',
         'weapon_xm1014'
     };
 
@@ -878,12 +889,10 @@ local skinchanger = {}; do
             local insn = ffi.cast('uint8_t*', ptr);
 
             if insn[0] == 0xE8 then
-                -- relative, displacement relative to next instruction
                 local offset = ffi.cast('int32_t*', insn + 1)[0];
 
                 return insn + offset + 5;
             elseif insn[0] == 0xFF and insn[1] == 0x15 then
-                -- absolute
                 local call_addr = ffi.cast('uint32_t**', ffi.cast('const char*', ptr) + 2);
 
                 return call_addr[0][0];
@@ -921,33 +930,32 @@ local skinchanger = {}; do
 
         local create_map_t = function(key_type, value_type)
             return ffi.typeof([[struct {
-    void* lessFunc;
-    struct {
-        struct {
-            int left;
-            int right;
-            int parent;
-            int type;
-            $ key;
-            $ value;
-        }* memory;
-        int allocationCount;
-        int growSize;
-    } memory;
-    int root;
-    int num_elements;
-    int firstFree;
-    int lastAlloc;
-    struct {
-        int left;
-        int right;
-        int parent;
-        int type;
-        $ key;
-        $ value;
-    }* elements;
-}
-]], ffi.typeof(key_type), ffi.typeof(value_type), ffi.typeof(key_type), ffi.typeof(value_type));
+                void* lessFunc;
+                struct {
+                    struct {
+                        int left;
+                        int right;
+                        int parent;
+                        int type;
+                        $ key;
+                        $ value;
+                    }* memory;
+                    int allocationCount;
+                    int growSize;
+                } memory;
+                int root;
+                int num_elements;
+                int firstFree;
+                int lastAlloc;
+                struct {
+                    int left;
+                    int right;
+                    int parent;
+                    int type;
+                    $ key;
+                    $ value;
+                }* elements;
+            }]], ffi.typeof(key_type), ffi.typeof(value_type), ffi.typeof(key_type), ffi.typeof(value_type));
         end;
 
         item_schema_t = ffi.typeof([[struct { $ paint_kits; }*]], create_map_t('int', paint_kit_t .. '*'));
@@ -1129,3 +1137,8 @@ local skinchanger = {}; do
 end;
 
 --#endregion
+
+engine.execute_client_cmd('clear');
+utils:play_sound('ui/item_drop.wav');
+printf('welcome back, %s!', get_user_name());
+printf('lua fully initialized in %.3f seconds', os.clock() - LOAD_TIME);

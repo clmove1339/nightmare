@@ -46,7 +46,7 @@ local ui = {}; do
 
     ---@param self menu_item
     ---@param value any
-    ---@param index integer
+    ---@param index? integer
     ---@return { element: menu_item, old_value: any, overrided: boolean }
     local function override(self, value, index)
         local element = self;

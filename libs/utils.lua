@@ -22,7 +22,7 @@ local utils = {}; do
         flags = flags or 0;
         delay = delay or 0;
 
-        return IEngineSound:EmitAmbientSound(sound, 1., pitch, flags, delay);
+        return IEngineSound:EmitAmbientSound(sound, volume, pitch, flags, delay);
     end;
 
     ---@param guid number
