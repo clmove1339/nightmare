@@ -389,7 +389,7 @@ local antiaim = {}; do
                     if _DEV then
                         printf('lc: %s', distance > 64);
                         printf('distance: %.2f', distance);
-                        printf('choked: %d\n', globals.choked_commands);
+                        printf('choked: %d\\n', globals.choked_commands);
                     end;
 
                     server_origin = vec3_t.new(origin.x, origin.y, origin.z);
@@ -539,7 +539,7 @@ local visualization = {}; do
             local user_name = get_user_name();
             local current_time = os.date('%I:%M %p');
             local formatted_latency = string.format('%.1f ms', latency);
-            local watermark_text = string.format(' %s \a414141ff|\adefault %s \a414141ff|\adefault %s ', user_name, formatted_latency, current_time);
+            local watermark_text = string.format(' %s \\a414141ff|\\adefault %s \\a414141ff|\\adefault %s ', user_name, formatted_latency, current_time);
 
             local icon = 'СИСЬКИ ПОПКИ КАКАЩЬКЕ';
             local text_size = render.measure_text(font.text[18], watermark_text);
@@ -1148,3 +1148,7 @@ engine.execute_client_cmd('clear');
 utils:play_sound('ui/item_drop.wav');
 printf('welcome back, %s!', get_user_name());
 printf('lua fully initialized in %.3f seconds', os.clock() - LOAD_TIME);
+
+register_callback('unload', function()
+    print('bye! ;(');
+end);
