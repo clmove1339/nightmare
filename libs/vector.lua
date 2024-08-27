@@ -1,9 +1,10 @@
 -- Люблю маму никсера
 -- Кто нибудь вставьте или напишите эту либу сюда
 -- я не знаю нуу вроде вот, добавьте нужные методы, если их тут нет
--- upd: БАНАН НАПИШИ ТАЙПИНГИ, ОНО ПОЧЕМУ-ТО НЕ ВИДИТ ТО ЧТО У ЕБУЧЕГО vec3_t ПОЯВИЛСЯ :length() и т.д.
--- upd: ГОТОВО БОСС
--- upd: ЕЩЕ РАЗ ТЫ ТРОНЕШЬ МОЕГО ЕНОТА
+-- upd #1: БАНАН НАПИШИ ТАЙПИНГИ, ОНО ПОЧЕМУ-ТО НЕ ВИДИТ ТО ЧТО У ЕБУЧЕГО vec3_t ПОЯВИЛСЯ :length() и т.д.
+-- upd #2: ГОТОВО БОСС
+-- upd #3: ЕЩЕ РАЗ ТЫ ТРОНЕШЬ МОЕГО ЕНОТА
+-- upd #4: Я ТРОНУЛ
 
 --#region: vec2_t
 ---@diagnostic disable-next-line: circle-doc-class
@@ -82,6 +83,7 @@ end;
 ---@field forward fun(self: vec3_t): vec3_t Returns the normalized vector representing the direction of this vector.
 ---@field angles fun(pitch: number, yaw: number): vec3_t Creates a vector from the given angles (pitch - vertical angle, yaw - horizontal angle).
 ---@field dist fun(self: vec3_t, vector: vec3_t): number Returns the distance between this vector and another vector.
+---@field transform fun(self: vec3_t, matrix: table)
 
 function vec3_t:unpack()
     return self.x, self.y, self.z;
@@ -183,12 +185,21 @@ function vec3_t.angles(pitch, yaw)
     return vec3_t.new(cp * cy, cp * sy, -sp);
 end;
 
+function vec3_t:transform(matrix)
+    return vec3_t.new(
+        self.x * matrix[0] + self.y * matrix[1] + self.z * matrix[2] + matrix[3],
+        self.x * matrix[4] + self.y * matrix[5] + self.z * matrix[6] + matrix[7],
+        self.x * matrix[8] + self.y * matrix[9] + self.z * matrix[10] + matrix[11]
+    );
+end;
+
 function vec3_t:dist(vector)
     return (self - vector):length();
 end;
 
 --#endregion
 
+--#region: angle_t
 ---@diagnostic disable-next-line: circle-doc-class
 ---@class angle_t: angle_t
 ---@field forward fun(self: angle_t): vec3_t Returns the normalized vector representing the direction of this vector.
@@ -199,3 +210,5 @@ function angle_t:forward()
 
     return vec3_t.new(math.cos(pitch_rad) * math.cos(yaw_rad), math.cos(pitch_rad) * math.sin(yaw_rad), -math.sin(pitch_rad));
 end;
+
+--#endregion

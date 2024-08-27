@@ -17,7 +17,7 @@ netvars = {
     m_vecViewOffset       = 0x108
 };
 
-for k, v in pairs(netvars) do
+for _, v in pairs(netvars) do
     if v == 0 then
         error('NETVAR GOVNO DAVAI PO NOVOI');
     end;

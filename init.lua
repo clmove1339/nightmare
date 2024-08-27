@@ -44,8 +44,7 @@ local aimbot = {}; do
     local handle = ui.create('Aimbot');
 
     local jump_scout = {}; do
-        -- где нах :get_active_weapon и :is_visible
-        -- когда добавите тогда почешем яйца
+        -- чешем яйца
         local group, enable = handle:switch('Jump scout', nil, true);
 
         local auto_stop = group:switch('Auto stop', true, false);
@@ -70,13 +69,15 @@ local aimbot = {}; do
                     local player_team = player:get_team();
                     local is_enemy = my_team ~= player_team;
 
-                    if player:is_visible() and is_enemy then
-                        local distance = my_origin:dist(player:get_origin());
+                    player:is_visible(me);
 
-                        if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
-                            return true;
-                        end;
-                    end;
+                    -- if is_enemy and player:is_visible(me) then
+                    --     local distance = my_origin:dist(player:get_origin());
+
+                    --     if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
+                    --         return true;
+                    --     end;
+                    -- end;
                 end;
             end;
 
@@ -128,18 +129,20 @@ local aimbot = {}; do
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
                 local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
 
-                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                self:threat_hittable();
 
-                if active then
-                    nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
-                    nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
+                -- local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
-                    if auto_stop:get() then
-                        nixware['Movement']['Movement'].auto_strafer:override(false);
-                        nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
-                        self:stop(cmd);
-                    end;
-                end;
+                -- if active then
+                --     nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
+                --     nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
+
+                --     if auto_stop:get() then
+                --         nixware['Movement']['Movement'].auto_strafer:override(false);
+                --         nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
+                --         self:stop(cmd);
+                --     end;
+                -- end;
             end;
         end;
 
@@ -444,6 +447,10 @@ local antiaim = {}; do
             ---@param settings CState
             ---@param cmd user_cmd_t
             antiaim.defensive.handle = function(settings, cmd)
+                if bit.has(cmd.buttons, IN.ATTACK) then
+                    return;
+                end;
+
                 if not settings.defensive:get() then
                     return;
                 end;
@@ -593,7 +600,7 @@ local misc = {}; do
         local class, switch = handle:switch('Killsay', false, true);
         local CPM = class:slider_int('Characters per minute', 200, 500, 300); -- Characters per minute
 
-        ---@type CState<number, {list: string[], flags?: CState<boolean?>}>
+        ---@type table<number, {list: string[], flags?: table<boolean?>}>
         local phrases = require 'libs.phrases';
         local already_writing = false;
 
@@ -642,7 +649,7 @@ local misc = {}; do
         end;
 
         ---@param event game_event_t
-        ---@param flags CState
+        ---@param flags table
         local function is_valid_flags(event, flags)
             if type(flags) ~= 'table' then
                 return true;
@@ -700,7 +707,7 @@ local misc = {}; do
 
             timers.new(
                 string.format('killsay_%s_end', id),
-                0.1 + last_duration,
+                0.5 + last_duration,
                 function()
                     already_writing = false;
                 end,

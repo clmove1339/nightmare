@@ -52,11 +52,28 @@ function entity_t:get_eye_position()
     return self:get_origin() + vec3_t.new(m_vecViewOffset[0], m_vecViewOffset[1], m_vecViewOffset[2]);
 end;
 
-function entity_t:is_visible()
-    local lp = entitylist.get_local_player();
-    if not lp then return false; end;
+---Checks whether the entity can be seen by the target
+---@param target entity_t
+---@return boolean
+function entity_t:is_visible(target)
+    if not (target and target:is_alive()) then
+        return false;
+    end;
 
-    local trace = engine.trace_line(lp:get_eye_position(), self:get_origin(), lp, 0x46004003);
+    local mask = 0x46004003;
+    local view_origin = target:get_eye_position();
 
-    return trace.fraction > .9;
+    for i = 0, 18 do
+        local origin = self:get_hitbox_position(i);
+
+        if origin then
+            local trace = engine.trace_line(view_origin, origin, target, mask);
+
+            if trace.fraction > .9 then
+                return true;
+            end;
+        end;
+    end;
+
+    return false;
 end;
