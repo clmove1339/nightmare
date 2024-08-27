@@ -1148,25 +1148,3 @@ engine.execute_client_cmd('clear');
 utils:play_sound('ui/item_drop.wav');
 printf('welcome back, %s!', get_user_name());
 printf('lua fully initialized in %.3f seconds', os.clock() - LOAD_TIME);
-
-register_callback('paint', function()
-    xpcall(function(...)
-        local me = entitylist.get_local_player();
-
-        if me == nil or not me:is_alive() then
-            return;
-        end;
-
-
-        local head = me:get_hitbox_position(0);
-
-        if (head == nil) then
-            return;
-        end;
-
-
-        for i = 0, 10, 0.1 do
-            render.circle_3d(head + vec3_t.new(0, 0, 10 - math.sin(i)), i, color_t.new(1, 1, 1, 1));
-        end;
-    end, print);
-end);
