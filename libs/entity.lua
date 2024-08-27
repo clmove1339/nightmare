@@ -16,7 +16,7 @@ end;
 
 ---@return integer
 function entity_t:get_team()
-    return ffi.cast('int*', me[netvars.m_iTeamNum])[0];
+    return ffi.cast('int*', self[netvars.m_iTeamNum])[0];
 end;
 
 function entitylist.from_handle(handle)

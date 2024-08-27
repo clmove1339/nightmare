@@ -28,6 +28,16 @@ local materials = require 'libs.material_system';
 --#endregion
 --#region: Main
 local aimbot = {}; do
+    ffi.cdef [[
+        struct ClientClass {
+            void*               create_fn;
+            void*               create_event_fn;
+            const char*         network_name;
+            struct RecvTable*   recv_table;
+            struct ClientClass* next;
+            int                 class_id;
+        };
+    ]];
     ---@private
     local handle = ui.create('Aimbot');
 
@@ -93,7 +103,7 @@ local aimbot = {}; do
             cmd.sidemove = negated_direction.y;
         end;
 
-        function jump_scout:on_create_move()
+        function jump_scout:on_create_move(cmd)
             local me = entitylist.get_local_player();
 
             if not (me and me:is_alive()) then
@@ -112,29 +122,31 @@ local aimbot = {}; do
                 end;
 
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-                local in_air = bit.band(cmd.buttons, enum.buttons.in_jump) == enum.buttons.in_jump or bit.band(flags, enum.flags.onground) == 0;
+                local in_air = bit.band(cmd.buttons, IN.JUMP) == IN.JUMP or bit.band(flags, FL.ONGROUND) == 0;
 
-                local active = menu.aimbot.jump_scout:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                -- local active = enable and self:threat_hittable() and me:can_fire() and in_air;
 
-                ui.find_check_box('Auto strafer [  ]', 'Movement/Movement'):set(not active);
+                -- ui.find_check_box('Auto strafer [  ]', 'Movement/Movement'):set(not active);
 
-                if active and not ui.is_visible() then
-                    if not jump_scout.cache.active then
-                        jump_scout.cache.value = scout_hitchance:get();
-                        jump_scout.cache.active = true;
-                    end;
+                -- if active and not ui.is_visible() then
+                --     if not jump_scout.cache.active then
+                --         jump_scout.cache.value = scout_hitchance:get();
+                --         jump_scout.cache.active = true;
+                --     end;
 
-                    scout_hitchance:set(hitchance);
-                    fast_stop:stop(cmd);
-                elseif jump_scout.cache.active then
-                    scout_hitchance:set(jump_scout.cache.value);
-                    jump_scout.cache.active = false;
-                end;
+                --     scout_hitchance:set(hitchance);
+                --     self:stop(cmd);
+                -- elseif jump_scout.cache.active then
+                --     scout_hitchance:set(jump_scout.cache.value);
+                --     jump_scout.cache.active = false;
+                -- end;
             end;
         end;
 
-        register_callback('create_move', function()
-            xpcall(jump_scout.on_create_move, print, jump_scout);
+        register_callback('create_move', function(cmd)
+            xpcall(function()
+                jump_scout:on_create_move(cmd);
+            end, print);
         end);
     end;
 end;
