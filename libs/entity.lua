@@ -13,6 +13,10 @@ function entity_t:is_alive()
     return self and ffi.cast('char*', self[netvars.m_lifeState])[0] == 0;
 end;
 
+function entity_t:get_address()
+    return ffi.cast('uintptr_t', self[0]);
+end;
+
 function entity_t:get_velocity()
     local m_vecVelocity = ffi.cast('float*', self[netvars.m_vecVelocity]);
     return vec3_t.new(
@@ -62,9 +66,7 @@ function entity_t:get_eye_position()
 end;
 
 function entity_t:get_weapon_info()
-    -- Проверку добавить надо на то что это не веапон
-    -- А еще пофиксить эту хуйню ибо оно крашит нахуй
-    return native_GetWeaponInfo(ffi.cast('uintptr_t*', self[0])[0]);
+    return native_GetWeaponInfo(self:get_address());
 end;
 
 function entity_t:is_grenade()
