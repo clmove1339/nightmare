@@ -344,7 +344,7 @@ local antiaim = {}; do
         local in_crouch = duck_amount > 0;
         local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
-        local in_use = bit.has(cmd.buttons, IN.USE);
+        local in_use = input:is_key_pressed(0x45); -- Сомнительно но окээй
 
         if in_use then
             return states[9];
@@ -618,6 +618,32 @@ local antiaim = {}; do
             end;
         end;
 
+        antiaim.legit = { trigger = false }; do
+            ---@param state PLAYER_STATE
+            antiaim.legit.handle = function(state)
+                local me = entitylist.get_local_player();
+                local is_defusing = ffi.cast('int*', me[netvars.m_bIsDefusing])[0] == 1;
+                local is_grabbing = ffi.cast('int*', me[netvars.m_bIsGrabbingHostage])[0] == 1;
+
+                if is_defusing or is_grabbing then
+                    antiaim.legit.trigger = false;
+                    return;
+                end;
+
+                if state ~= 'On use' then
+                    antiaim.legit.trigger = false;
+                    return;
+                end;
+
+                if antiaim.legit.trigger then
+                    return;
+                end;
+
+                engine.execute_client_cmd('-use');
+                antiaim.legit.trigger = true;
+            end;
+        end;
+
         local native_enabled = source.enabled:get();
 
         ---@param cmd user_cmd_t
@@ -633,6 +659,7 @@ local antiaim = {}; do
                 element:set(settings[name]:get());
             end;
 
+            antiaim.legit.handle(state);
             antiaim.fakelag.handle(settings, cmd);
             antiaim.defensive.handle(settings, cmd);
         end;
