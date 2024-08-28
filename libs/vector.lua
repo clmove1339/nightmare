@@ -83,6 +83,8 @@ end;
 ---@field forward fun(self: vec3_t): vec3_t Returns the normalized vector representing the direction of this vector.
 ---@field angles fun(pitch: number, yaw: number): vec3_t Creates a vector from the given angles (pitch - vertical angle, yaw - horizontal angle).
 ---@field dist fun(self: vec3_t, vector: vec3_t): number Returns the distance between this vector and another vector.
+---@field length2d_sqr fun(self: vec3_t): number
+---@field dot fun(self: vec3_t): number
 ---@field transform fun(self: vec3_t, matrix: table)
 
 function vec3_t:unpack()
@@ -154,7 +156,9 @@ function vec3_t:normalize()
 end;
 
 function vec3_t:to_angle()
-    local pitch = math.deg(math.atan2(-self.z, math.sqrt(self.x * self.x + self.y * self.y)));
+    local hyp2d = math.sqrt(self.x * self.x + self.y * self.y);
+
+    local pitch = math.deg(math.atan2(-self.z, hyp2d));
     local yaw = math.deg(math.atan2(self.y, self.x));
 
     yaw = normalize_yaw(yaw);
@@ -182,6 +186,10 @@ function vec3_t:forward()
     return vec3_t.new(cp * cy, cp * sy, -sp);
 end;
 
+function vec3_t:dot(other)
+    return self.x * other.x + self.y * other.y + self.z * other.z;
+end;
+
 function vec3_t.angles(pitch, yaw)
     pitch = pitch or 0;
     yaw = yaw or 0;
@@ -191,10 +199,6 @@ function vec3_t.angles(pitch, yaw)
     local cy, sy = math.cos(ry), math.sin(ry);
 
     return vec3_t.new(cp * cy, cp * sy, -sp);
-end;
-
-function vec3_t:dot(other)
-    return self.x * other.x + self.y * other.y + self.z * other.z;
 end;
 
 function vec3_t:transform(matrix)
