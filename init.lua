@@ -590,6 +590,11 @@ local antiaim = {}; do
             ---@param settings CState
             ---@param cmd user_cmd_t
             antiaim.defensive.handle = function(settings, cmd)
+                local me = entitylist.get_local_player();
+                if not (me and me:is_alive()) then
+                    return;
+                end;
+
                 if bit.has(cmd.buttons, IN.ATTACK) then
                     return;
                 end;
@@ -604,8 +609,9 @@ local antiaim = {}; do
 
                 local pitch_type = settings.defensive_pitch:get();
                 local modifier_type = settings.defensive_yaw:get();
+                local m_MoveType = ffi.cast('int*', me[0x25C])[0];
 
-                if pitch_type ~= 0 then
+                if pitch_type ~= 0 and (m_MoveType ~= 8 or m_MoveType ~= 9) then
                     source.pitch:set(0);
                     cmd.viewangles.pitch = antiaim.defensive.calculate_pitch(settings, pitch_type);
                 end;
