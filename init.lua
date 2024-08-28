@@ -154,6 +154,7 @@ local aimbot = {}; do
 
     local logs = {}; do
         local group, enable = handle:switch('Aimbot notifications', false, true);
+        local output = group:multicombo('Output', { 'Hits', 'Misses' }, { 0, 1 });
 
         local hitgroups = {
             [0]  = 'generic',
@@ -179,7 +180,39 @@ local aimbot = {}; do
             ['molotov'] = 'Naded'
         };
 
-        function logs:player_hurt(event)
+        local map = {};
+        local last_update = 0;
+
+        function logs.on_weapon_fire(event)
+            local userid = entitylist.get(event:get_int('userid', nil), true);
+            local me = entitylist.get_local_player();
+
+            if me ~= userid then
+                return;
+            end;
+
+            local weapon = me:get_active_weapon();
+            local class = weapon:get_class_name();
+
+            last_update = globals.cur_time;
+
+            map[last_update] = {
+                state = 'shot',
+                left_mouse = input:is_key_clicked(0x01) or input:is_key_pressed(0x01),
+                right_mouse = input:is_key_clicked(0x02) or input:is_key_pressed(0x02), -- НА ВСЯКИЙ СЛУЧАЙ
+                is_grenade = class:find('Grenade')
+            };
+        end;
+
+        function logs.on_aimbot_hit(event)
+            if not enable:get() or not output:get(0) then
+                return;
+            end;
+
+            if map[last_update].state == 'shot' then
+                map[last_update].state = 'hit';
+            end;
+
             local userid = entitylist.get(event:get_int('userid', 0), true);
             local attacker = entitylist.get(event:get_int('attacker', 0), true);
 
@@ -195,7 +228,6 @@ local aimbot = {}; do
 
             local player_info = userid:get_player_info();
             local weapon = event:get_string('weapon', 'unknown');
-
             local hit = type_hit[weapon] or 'Hit';
 
             if hit == 'Hit' then
@@ -205,15 +237,34 @@ local aimbot = {}; do
             end;
         end;
 
-        register_callback('player_hurt', function(event)
-            if not enable:get() then
+        function logs.on_aimbot_miss()
+            if not enable:get() or not output:get(1) then
                 return;
             end;
 
-            xpcall(function()
-                logs:player_hurt(event); -- РАДИ АЛЛАХА НЕ КРАШНИ
-            end, print, event);
-        end);
+            local data = map[last_update];
+            local state = data.state;
+
+            if state == '' then
+                return;
+            end;
+
+            if data.left_mouse or data.right_mouse or data.is_grenade then
+                map[last_update].state = '';
+
+                return;
+            end;
+
+            if state == 'shot' then
+                print('miss shot due to ?');
+            end;
+
+            map[last_update].state = '';
+        end;
+
+        register_callback('weapon_fire', logs.on_weapon_fire);
+        register_callback('player_hurt', logs.on_aimbot_hit);
+        register_callback('paint', logs.on_aimbot_miss);
     end;
 end;
 
