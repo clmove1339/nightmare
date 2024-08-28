@@ -95,8 +95,8 @@ function vec3_t:__tostring()
     return string.format('vec3_t(%s, %s, %s)', self:unpack());
 end;
 
-function vec3_t:__concat()
-    return string.format('vec3_t(%s, %s, %s)', self:unpack());
+function vec3_t:__concat(other)
+    return string.format('%s%s', tostring(self), tostring(other));
 end;
 
 function vec3_t:__add(vector)

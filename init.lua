@@ -25,6 +25,7 @@ require 'libs.global';
 require 'libs.interfaces';
 require 'libs.entity';
 require 'libs.vector';
+require 'libs.color';
 require 'libs.render';
 require 'libs.vector';
 
@@ -914,7 +915,9 @@ local misc = {}; do
 end;
 
 local skinchanger = {}; do
-    -- Снизу все обосрано и обдристано. НЕ ПРИБЛИЖАТЬСЯ ЕСЛИ НЕ УВЕРЕНЫ ЧТО ВЫ ДЕЛАЕТЕ!!! ИНАЧЕ МОЖЕТ СРАСТИСЬ С ДЕРЬМОМ!!!
+    -- Снизу все обосрано и обдристано. НЕ ПРИБЛИЖАТЬСЯ ЕСЛИ ВЫ НЕ УВЕРЕНЫ ЧТО ДЕЛАЕТЕ!!! ИНАЧЕ ВЫ МОЖЕТЕ СРАСТИСЬ С ДЕРЬМОМ!!!
+    -- upd #1: Теперь менее обосрано
+    local handle = ui.create('Skinchanger');
     local weapon_data = require 'libs.weapon_skins';
 
     local weapon_names = {
@@ -947,16 +950,26 @@ local skinchanger = {}; do
         'Bowie Knife', 'Butterfly Knife', 'Shadow Daggers'
     };
 
-
-    local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
-
     local weapon2index = {};
-
     for i, v in ipairs(weapon_names) do
         weapon2index[v] = i - 1;
     end;
 
-    local handle = ui.create('Skinchanger');
+    local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
+    local native_GetModelIndex = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 2, 'int(__thiscall*)(void*, const char*)');
+    local native_SetModelIndex = memory:get_vfunc(75, 'void(__thiscall*)(void*, int)');
+    local m_nDeltaTick = ffi.cast('int*', ffi.cast('uintptr_t', ffi.cast('uintptr_t***', (ffi.cast('uintptr_t**', memory:create_interface('engine.dll', 'VEngineClient014'))[0][12] + 16))[0][0]) + 0x0174);
+
+    local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018'));
+
+    local WEAPON_KNIFE_DEF_IDX = KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET;
+    local WEAPON_KNIFE_MDL_PATH = KNIFE_MDLs[WEAPON_KNIFE_DEF_IDX];
+
+    local WEAPON_KNIFE_MDL_IDX = native_GetModelIndex(WEAPON_KNIFE_MDL_PATH);
+
+    local paint_kits = {};
+    local default_paint_kits = {};
+
     local gui = {
         weapons         = {},
         knife_selector  = handle:combo('Knife selector', formatted_knife_name),
@@ -1103,22 +1116,6 @@ local skinchanger = {}; do
         schema = item_schema_c.create(ffi.cast(item_schema_t, get_item_schema_fn() + 4));
     end;
 
-    local m_nDeltaTick = ffi.cast('int*', ffi.cast('uintptr_t', ffi.cast('uintptr_t***', (ffi.cast('uintptr_t**', memory:create_interface('engine.dll', 'VEngineClient014'))[0][12] + 16))[0][0]) + 0x0174);
-
-    local paint_kits = {};
-    local default_paint_kits = {};
-    color_t.__eq = function(s, o) return s.r == o.r and s.g == o.g and s.b == o.b and s.a == o.a; end;
-
-    local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018'));
-
-    local WEAPON_KNIFE_DEF_IDX = KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET;
-    local WEAPON_KNIFE_MDL_PATH = KNIFE_MDLs[WEAPON_KNIFE_DEF_IDX];
-
-    local native_GetModelIndex = memory:get_vfunc('engine.dll', 'VModelInfoClient004', 2, 'int(__thiscall*)(void*, const char*)');
-    local native_SetModelIndex = memory:get_vfunc(75, 'void(__thiscall*)(void*, int)');
-
-    local WEAPON_KNIFE_MDL_IDX = native_GetModelIndex(WEAPON_KNIFE_MDL_PATH);
-
     local function set_model(weapon, model_index, item_index)
         ffi.cast('int*', weapon + netvars.m_iEntityQuality)[0] = 3;
         ffi.cast('int*', weapon + netvars.m_iItemDefinitionIndex)[0] = item_index;
@@ -1129,7 +1126,9 @@ local skinchanger = {}; do
     local function apply_skin(weapon, weapon_info)
         local weapon_name = ffi.string(weapon_info.ConsoleName);
         local gui_weapon = gui.weapons[weapon_name];
-        if not gui_weapon then return; end;
+        if not gui_weapon then
+            return;
+        end;
 
         local selected_skin = gui_weapon.skin:get();
         local wear = gui_weapon.wear:get();
@@ -1138,7 +1137,9 @@ local skinchanger = {}; do
 
         local skin_name = weapon_data[weapon_name].skin_names[selected_skin + 1];
         local skin_id = weapon_data[weapon_name].skin_ids[skin_name];
-        if not skin_id then return; end;
+        if not skin_id then
+            return;
+        end;
 
         local paint_kit = paint_kits[skin_id] or schema:get_paint_kit(skin_id);
         paint_kits[skin_id] = paint_kit;
@@ -1183,15 +1184,21 @@ local skinchanger = {}; do
 
     local function apply_knife_skin(me, weapon)
         local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
-        if not weapon_handle then return; end;
+        if not weapon_handle then
+            return;
+        end;
 
         local active_weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
-        if not active_weapon then return; end;
+        if not active_weapon then
+            return;
+        end;
 
         set_model(weapon, WEAPON_KNIFE_MDL_IDX, WEAPON_KNIFE_DEF_IDX);
 
         local view_model_handle = ffi.cast('int*', me[netvars.m_hViewModel])[0];
-        if view_model_handle == -1 then return; end;
+        if view_model_handle == -1 then
+            return;
+        end;
 
         local view_model = IClientEntityList:GetClientEntityFromHandle(view_model_handle);
         if active_weapon == weapon then
@@ -1204,7 +1211,7 @@ local skinchanger = {}; do
         for i = 0, 10 do
             local weapon_handle = my_weapons[i];
             if weapon_handle ~= -1 then
-                local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle);
+                local weapon = entitylist.from_handle(weapon_handle);
                 if weapon then
                     local weapon_info = native_GetWeaponInfo(weapon);
                     if weapon_info then
@@ -1225,7 +1232,9 @@ local skinchanger = {}; do
         if not weapon_handle then return; end;
 
         local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
-        if not weapon then return; end;
+        if not weapon then
+            return;
+        end;
 
         local knife_type = gui.knife_selector:get();
         if last_knife ~= knife_type then
@@ -1239,7 +1248,9 @@ local skinchanger = {}; do
         end;
 
         local weapon_info = native_GetWeaponInfo(weapon);
-        if not weapon_info then return; end;
+        if not weapon_info then
+            return;
+        end;
 
         local weapon_name = ffi.string(weapon_info.ConsoleName);
         -- if not gui.weapons[weapon_name] then return; end;
