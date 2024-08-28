@@ -20,6 +20,7 @@ netvars = {
     m_iTeamNum             = engine.get_netvar_offset('DT_BaseEntity', 'm_iTeamNum'),
     m_nHitboxSet           = engine.get_netvar_offset('DT_BaseAnimating', 'm_nHitboxSet'),
     m_flThrowStrength      = engine.get_netvar_offset('DT_BaseCSGrenade', 'm_flThrowStrength'),
+    m_bGunGameImmunity     = engine.get_netvar_offset('DT_CSPlayer', 'm_bGunGameImmunity'),
     m_vecViewOffset        = 0x108
 };
 

@@ -1,154 +1,119 @@
-local function AngleVectors(angles)
-	local sr, sp, sy = math.sin(math.rad(angles.roll)), math.sin(math.rad(angles.pitch)), math.sin(math.rad(angles.yaw));
-	local cr, cp, cy = math.cos(math.rad(angles.roll)), math.cos(math.rad(angles.pitch)), math.cos(math.rad(angles.yaw));
+local super_toss = {};
 
-	local forward = {
-		x = cp * cy,
-		y = cp * sy,
-		z = -sp
-	};
+super_toss.active = false;
 
-	local right = {
-		x = -sr * sp * cy + cr * -sy,
-		y = -sr * sp * sy + cr * cy,
-		z = -sr * cp
-	};
+super_toss.check_active = function()
+    super_toss.active = false;
+    local me = entitylist.get_local_player();
+    if not (me and me:is_alive()) then
+        return;
+    end;
 
-	local up = {
-		x = cr * sp * cy + -sr * -sy,
-		y = cr * sp * sy + -sr * cy,
-		z = cr * cp
-	};
+    local m_MoveType = ffi.cast('int*', ffi.cast('uintptr_t', me[0]) + 0x25C)[0];
 
-	return forward, right, up;
+    if m_MoveType == 8 or m_MoveType == 9 then
+        return;
+    end;
+
+    local weapon = me:get_active_weapon();
+
+    local weapon_info = weapon:is_grenade();
+    if weapon_info == nil then
+        return;
+    end;
+
+    super_toss.active = true;
 end;
 
-local function GetYaw(a1, a2)
-	if (a1 ~= 0 or a2 ~= 0) then
-		return math.atan2(a2, a1) * 57.295776;
-	end;
-	return 0;
+ffi.cdef([[
+    typedef struct {
+        float x;
+        float y;
+        float z;
+    } vector_t;
+]]);
+
+super_toss.ang_vec = function(ang)
+    return vec3_t.new(
+        math.cos(ang.x * math.pi / 180) * math.cos(ang.y * math.pi / 180),
+        math.cos(ang.x * math.pi / 180) * math.sin(ang.y * math.pi / 180),
+        -math.sin(ang.x * math.pi / 180)
+    );
 end;
 
-local function AutoStrafe(cmd)
-	local m_strafe_flags, m_last_yaw;
-
-	local me = entitylist.get_local_player();
-	if not (me and me:is_alive()) then
-		return;
-	end;
-
-	local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-	local m_MoveType = me.m_MoveType;                                                                    -- гетните
-
-	if (bit.has(flags, FL.ONGROUND) or m_MoveType == MOVETYPE_NOCLIP or m_MoveType or MOVETYPE_LADDER) then -- пукните
-		return;
-	end;
-
-	if (bit.has(cmd.buttons, IN.SPEED)) then
-		return;
-	end;
-
-	local velocity = me:get_velocity();
-	local velocity_len = velocity:length2d();
-
-	local strafer_smoothing = config.misc.movement.auto_strafe_smooth:get();
-	local ideal_step = math.min(90, 845 / velocity_len);
-	local velocity_yaw = GetYaw(velocity.x, velocity.y);
-
-	local angles = cmd.viewangles;
-
-	if (velocity_len < 2 and bit.has(cmd.buttons, IN.JUMP)) then
-		cmd.forwardmove = 450;
-	end;
-
-	local forward_move = cmd.forwardmove;
-
-	if (forward_move ~= 0 or cmd.sidemove ~= 0) then
-		cmd.forwardmove = 0;
-
-		if (velocity_len ~= 0 and math.abs(velocity.z) ~= 0) then
-			::DO_IT_AGAIN::
-			local forw, right = AngleVectors(angles);
-
-			local v262 = (forw.x * forward_move) + (cmd.sidemove * right.x);
-			local v263 = (right.y * cmd.sidemove) + (forw.y * forward_move);
-			angles.yaw = GetYaw(v262, v263);
-		end;
-	end;
-
-	local yaw_to_use = 0;
-	m_strafe_flags = bit.band(m_strafe_flags, bit.bnot(4));
-
-	local clamped_angles = angles.yaw;
-	if (clamped_angles < -180) then
-		clamped_angles = clamped_angles + 360;
-	end;
-	if (clamped_angles > 180) then
-		clamped_angles = clamped_angles - 360;
-	end;
-
-	yaw_to_use = cmd.viewangles.yaw;
-	m_strafe_flags = bit.bor(m_strafe_flags, 4);
-	m_last_yaw = clamped_angles;
-
-	if (m_strafe_flags & 4) then
-		local diff = angles.yaw - yaw_to_use;
-		if (diff < -180) then diff = diff + 360; end;
-		if (diff > 180) then diff = diff - 360; end;
-
-		if (math.abs(diff) > ideal_step and math.abs(diff) <= 30) then
-			local move = 450;
-			if (diff < 0) then
-				move = move * -1;
-			end;
-
-			cmd.sidemove = move;
-			return;
-		end;
-	end;
-
-	local diff = angles.yaw - velocity_yaw;
-	if (diff < -180) then diff = diff + 360; end;
-	if (diff > 180) then diff = diff - 360; end;
-
-	local step = ((100 - 30) * 0.02) * (ideal_step + ideal_step);
-	local sidemove = 0;
-	if (math.abs(diff) > 170 and velocity_len > 80 or diff > step and velocity_len > 80) then
-		angles.yaw = step + velocity_yaw;
-		cmd.sidemove = -450;
-	elseif (-step <= diff or velocity_len <= 80) then
-		if (m_strafe_flags & 1) then
-			angles.yaw = angles.yaw - ideal_step;
-			cmd.sidemove = -450;
-		else
-			angles.yaw = angles.yaw + ideal_step;
-			cmd.sidemove = 450;
-		end;
-	else
-		angles.yaw = velocity_yaw - step;
-		cmd.sidemove = 450;
-	end;
-	if (not (cmd.buttons & 16) and cmd.sidemove == 0) then
-		goto DO_IT_AGAIN;
-	end;
-
-	m_strafe_flags = bit.bxor(
-		m_strafe_flags,
-		bit.band(
-			bit.bxor(m_strafe_flags, bit.bnot(m_strafe_flags)),
-			1
-		)
-	);
-
-	local rotation = math.rad(cmd.viewangles.yaw - angles.yaw);
-
-	local cos_rot = math.cos(rotation);
-	local sin_rot = math.sin(rotation);
-
-	local new_forwardmove = (cos_rot * cmd.forwardmove) - (sin_rot * cmd.sidemove);
-	local new_sidemove = (sin_rot * cmd.forwardmove) + (cos_rot * cmd.sidemove);
-
-	cmd.forwardmove = new_forwardmove;
-	cmd.sidemove = new_sidemove;
+super_toss.on_render = function()
+    super_toss.check_active();
 end;
+
+super_toss.on_createmove = function(cmd)
+    if not super_toss.active then
+        return;
+    end;
+
+    local me = entity.get_local_player();
+    if not (me and me:is_alive()) then
+        return;
+    end;
+
+    local weapon = me:get_player_weapon();
+    if weapon == nil then
+        return;
+    end;
+
+    local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
+    if not weapon_handle then
+        return;
+    end;
+
+    local weapon_from_penis = entitylist.from_handle(weapon_handle[0]);
+    if not weapon_from_penis then
+        return;
+    end;
+
+    local weapon_info = native_GetWeaponInfo(weapon_from_penis);
+    if not weapon_info then
+        return;
+    end;
+
+    local ang_throw = vector(cmd.viewangles.x, cmd.viewangles.y, 0);
+    ang_throw.x = ang_throw.x - (90 - math.abs(ang_throw.x)) * 10 / 90;
+    ang_throw = super_toss.ang_vec(ang_throw);
+
+    local throw_strength = math.clamp(weapon.m_flThrowStrength, 0, 1);
+    local fl_velocity = math.clamp(weapon_info.throw_velocity * 0.9, 15, 750);
+
+    fl_velocity = fl_velocity * (throw_strength * 0.7 + 0.3);
+
+    local my_velocity = ffi.cast('vector_t*', ffi.cast('uintptr_t', me[0]) + 0x94)[0];
+    my_velocity = vec3_t.new(my_velocity.x, my_velocity.y, my_velocity.z);
+
+    local vec_throw = (ang_throw * fl_velocity + my_velocity * 1.45);
+    vec_throw = vec_throw:to_angle();
+
+    local yaw_difference = cmd.viewangles.yaw - vec_throw.yaw;
+    while yaw_difference > 180 do
+        yaw_difference = yaw_difference - 360;
+    end;
+    while yaw_difference < -180 do
+        yaw_difference = yaw_difference + 360;
+    end;
+
+    local pitch_difference = cmd.viewangles.pitch - vec_throw.pitch - 10;
+    while pitch_difference > 90 do
+        pitch_difference = pitch_difference - 45;
+    end;
+
+    while pitch_difference < -90 do
+        pitch_difference = pitch_difference + 45;
+    end;
+
+    cmd.viewangles.yaw = cmd.viewangles.y + yaw_difference;
+    cmd.viewangles.pitch = math.clamp(cmd.viewangles.pitch + pitch_difference, -89, 89);
+end;
+
+register_callback('paint', function()
+    xpcall(super_toss.on_render, print);
+end);
+register_callback('create_move', function(cmd)
+    xpcall(super_toss.on_createmove, print, cmd);
+end);

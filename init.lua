@@ -54,6 +54,13 @@ local aimbot = {}; do
         local auto_stop = group:switch('Auto stop', true, false);
         local hitchance = group:slider_int('Hit chance', 0, 100, 55);
         local min_damage = group:slider_int('Min damage', 1, 120, nixware['Ragebot']['Target']['Scout'].min_damage:get());
+        local on_top = group:switch('Stop on top', false);
+
+        auto_stop:connect({
+            hitchance,
+            min_damage,
+            on_top,
+        }, true);
 
         function aimbot.jump_scout:threat_hittable()
             local me = entitylist.get_local_player();
@@ -63,18 +70,15 @@ local aimbot = {}; do
             end;
 
             local my_origin = me:get_origin();
-            local my_team = me:get_team();
 
             local entities = entitylist.get_entities('CCSPlayer', false);
 
             for i = 1, #entities do
                 local player = entities[i];
                 if player and player:is_alive() then
-                    local player_team = player:get_team();
-                    local is_enemy = my_team ~= player_team;
-                    local is_spectator = player_team == 0;
+                    local can_hit = ffi.cast('int*', player[netvars.m_bGunGameImmunity])[0] == 0;
 
-                    if not is_spectator and is_enemy and player:is_visible(me) then
+                    if not player:is_spectator() and player:is_enemy() and player:is_visible(me) and can_hit then
                         local distance = my_origin:dist(player:get_origin());
 
                         if distance <= 800 + (hitchance:get() * 2) then -- как это вообще должно работать
@@ -112,6 +116,7 @@ local aimbot = {}; do
 
         function aimbot.jump_scout:on_create_move(cmd)
             local me = entitylist.get_local_player();
+            local velocity = me:get_velocity();
 
             nixware['Ragebot']['Target']['Scout'].min_damage:override(nil);
             nixware['Ragebot']['Target']['Scout'].hit_chance:override(nil);
@@ -132,7 +137,13 @@ local aimbot = {}; do
                 local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
                 local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
 
-                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
+                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air;
+
+                if input:is_key_pressed(0x20) then
+                    if not on_top:get() or math.abs(velocity.z) > 10 or velocity.z == 0 then
+                        active = false;
+                    end;
+                end;
 
                 aimbot.jump_scout.state = active;
 
@@ -876,359 +887,6 @@ local misc = {}; do
         end;
 
         register_callback('player_death', main);
-    end;
-
-    local supertoss = {}; do
-        supertoss.type = handle:combo('Supertoss', { 'Off', 'Semi', 'Full' });
-
-        local ctx = {};
-
-        local function update()
-            local me = entitylist.get_local_player();
-            if not (me and me:is_alive()) then
-                return;
-            end;
-
-            if ctx.local_velocity then
-                ctx.last_local_velocity = vec3_t.new(
-                    ctx.local_velocity.x,
-                    ctx.local_velocity.y,
-                    ctx.local_velocity.z
-                );
-            end;
-
-            ctx.local_velocity = me:get_velocity();
-        end;
-
-        local function RayCircleIntersection(ray, center, r)
-            if (math.abs(ray.x) > math.abs(ray.y)) then
-                local k = ray.y / ray.x;
-
-                local a = 1 + k * k;
-                local b = -2 * center.x - 2 * k * center.y;
-                local c = center:length2d_sqr() - r * r;
-
-                local d = b * b - 4 * a * c;
-
-                if (d < 0) then
-                    local nearest_on_ray = ray * center:dot(ray);
-                    local diff = (nearest_on_ray - center):normalize();
-
-                    return center + diff * r;
-                elseif (d < 0.001) then
-                    local x = -b / (2 * a);
-                    localy = k * x;
-                    return vec2_t.new(x, y);
-                end;
-
-                local d_sqrt = math.sqrt(d);
-
-                local x = (-b + d_sqrt) / (2 * a);
-                local y = k * x;
-
-                local dir1 = vec3_t.new(x, y, 0);
-
-                x = (-b - d_sqrt) / (2 * a);
-                y = k * x;
-
-                local dir2 = vec3_t.new(x, y, 0);
-
-                if (ray:dot(dir1) > ray:dot(dir2)) then
-                    return dir1;
-                end;
-
-                return dir2;
-            else
-                local k = ray.x / ray.y;
-
-                local a = 1 + k * k;
-                local b = -2 * center.y - 2 * k * center.x;
-                local c = center:length2d_sqr() - r * r;
-
-                local d = b * b - 4 * a * c;
-
-                if (d < 0) then
-                    local nearest_on_ray = ray * center:dot(ray);
-                    local diff = (nearest_on_ray - center):normalize();
-
-                    return center + diff * r;
-                elseif (d < 0.001) then
-                    local y = -b / (2 * a);
-                    local x = k * y;
-                    return Vector(x, y);
-                end;
-
-                local d_sqrt = math.sqrt(d);
-
-                local y = (-b + d_sqrt) / (2 * a);
-                local x = k * y;
-
-                local dir1 = vec3_t.new(x, y, 0);
-
-                y = (-b - d_sqrt) / (2 * a);
-                x = k * y;
-
-                local dir2 = vec3_t.new(x, y, 0);
-
-                if (ray:dot(dir1) > ray:dot(dir2)) then
-                    return dir1;
-                end;
-
-                return dir2;
-            end;
-        end;
-
-        local function CalculateThrowYaw(wish_dir, vel, throw_velocity, throw_strength)
-            local dir_normalized = wish_dir;
-            dir_normalized.z = 0;
-            dir_normalized:normalize();
-
-            local cos_pitch = dir_normalized:dot(wish_dir) / wish_dir:length();
-
-            local real_dir = RayCircleIntersection(dir_normalized, vel * 1.25, math.clamp(throw_velocity * 0.9, 15, 750) * (math.clamp(throw_strength, 0, 1) * 0.7 + 0.3) * cos_pitch) - vel * 1.25;
-            return real_dir:to_angle().yaw;
-        end;
-
-        local function CalculateThrowPitch(wish_dir, wish_z_vel, vel, throw_velocity, throw_strength)
-            local speed = math.clamp(throw_velocity * 0.9, 15, 750) * (math.clamp(throw_strength, 0, 1) * 0.7 + 0.3);
-
-            local cur_vel = vel * 1.25 + wish_dir * speed;
-            local wish_vel = vec3_t.new(vel.x, vel.y, wish_z_vel) * 1.25 + wish_dir * speed;
-
-            local ang1 = cur_vel:to_angle();
-            local ang2 = wish_vel:to_angle();
-
-            local ang_diff = ang2.pitch - ang1.pitch;
-
-            return ang_diff * (math.cos(math.rad(ang_diff)) + 1) * 0.5;
-        end;
-
-        local function CompensateThrowable(cmd)
-            local type = supertoss.type:get();
-            if type == 0 then
-                return;
-            end;
-
-            local me = entitylist.get_local_player();
-            if not (me and me:is_alive()) then
-                return;
-            end;
-
-            local weapon = me:get_active_weapon();
-
-            if not weapon:is_grenade() then
-                return;
-            end;
-
-            local weapon_handle = ffi.cast('int*', me[netvars.m_hActiveWeapon]);
-            if not weapon_handle then
-                return;
-            end;
-
-            local weapon_from_penis = entitylist.from_handle(weapon_handle[0]);
-            if not weapon_from_penis then
-                return;
-            end;
-
-            local weaponData = native_GetWeaponInfo(weapon_from_penis);
-
-            if not weaponData then
-                return;
-            end;
-
-            local vangle = engine.get_view_angles();
-            local m_flThrowStrength = ffi.cast('float*', weapon[netvars.m_flThrowStrength])[0];
-
-            if (type == 2) then
-                local direction = vangle:forward();
-                local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-
-                local smoothed_velocity = (ctx.local_velocity + ctx.last_local_velocity) * 0.5;
-
-                local base_vel = direction * (math.clamp(weaponData.flThrowVelocity * 0.9, 15, 750) * (m_flThrowStrength * 0.7 + 0.3));
-                local curent_vel = ctx.local_velocity * 1.25 + base_vel;
-
-                local target_vel = (base_vel + smoothed_velocity * 1.25):normalize();
-                if (curent_vel:dot(direction) > 0) then
-                    target_vel = direction;
-                end;
-
-                local throw_yaw = CalculateThrowYaw(target_vel, ctx.local_velocity, weaponData.flThrowVelocity, m_flThrowStrength);
-
-                if bit.hasnt(flags, FL.ONGROUND) then
-                    cmd.viewangles.yaw = throw_yaw;
-                end;
-            end;
-
-            if (type == 1) then
-                cmd.viewangles.pitch = cmd.viewangles.pitch + CalculateThrowPitch(cmd.viewangles:forward(), math.clamp(ctx.local_velocity.z, -120, 120), ctx.local_velocity, weaponData.flThrowVelocity, m_flThrowStrength);
-            end;
-        end;
-
-        register_callback('create_move', update);
-        register_callback('create_move', function(cmd)
-            xpcall(CompensateThrowable, print, cmd);
-        end);
-    end;
-
-    local auto_strafer = {}; do
-        local function AngleVectors(angles)
-            local sr, sp, sy = math.sin(math.rad(angles.roll)), math.sin(math.rad(angles.pitch)), math.sin(math.rad(angles.yaw));
-            local cr, cp, cy = math.cos(math.rad(angles.roll)), math.cos(math.rad(angles.pitch)), math.cos(math.rad(angles.yaw));
-
-            local forward = {
-                x = cp * cy,
-                y = cp * sy,
-                z = -sp
-            };
-
-            local right = {
-                x = -sr * sp * cy + cr * -sy,
-                y = -sr * sp * sy + cr * cy,
-                z = -sr * cp
-            };
-
-            local up = {
-                x = cr * sp * cy + -sr * -sy,
-                y = cr * sp * sy + -sr * cy,
-                z = cr * cp
-            };
-
-            return forward, right, up;
-        end;
-
-        local function GetYaw(a1, a2)
-            if (a1 ~= 0 or a2 ~= 0) then
-                return math.atan2(a2, a1) * 57.295776;
-            end;
-            return 0;
-        end;
-
-        local function AutoStrafe(cmd)
-            local m_strafe_flags, m_last_yaw;
-
-            local me = entitylist.get_local_player();
-            if not (me and me:is_alive()) then
-                return;
-            end;
-
-            local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-            local m_MoveType = ffi.cast('int*', me[0] + 0x25C)[0];                      -- гетните
-
-            if (bit.has(flags, FL.ONGROUND) or m_MoveType == 8 or m_MoveType == 9) then -- пукните
-                return;
-            end;
-
-            if (bit.has(cmd.buttons, IN.SPEED)) then
-                return;
-            end;
-
-            local velocity = me:get_velocity();
-            local velocity_len = velocity:length2d();
-
-            local strafer_smoothing = 42; -- there should be a get value from the slider
-            local ideal_step = math.min(90, 845 / velocity_len);
-            local velocity_yaw = GetYaw(velocity.x, velocity.y);
-
-            local angles = cmd.viewangles;
-
-            if (velocity_len < 2 and bit.has(cmd.buttons, IN.JUMP)) then
-                cmd.forwardmove = 450;
-            end;
-
-            local forward_move = cmd.forwardmove;
-
-            if (forward_move ~= 0 or cmd.sidemove ~= 0) then
-                cmd.forwardmove = 0;
-
-                if (velocity_len ~= 0 and math.abs(velocity.z) ~= 0) then
-                    ::DO_IT_AGAIN::
-                    local forw, right = AngleVectors(angles);
-
-                    local v262 = (forw.x * forward_move) + (cmd.sidemove * right.x);
-                    local v263 = (right.y * cmd.sidemove) + (forw.y * forward_move);
-                    angles.yaw = GetYaw(v262, v263);
-                end;
-            end;
-
-            local yaw_to_use = 0;
-            m_strafe_flags = bit.band(m_strafe_flags, bit.bnot(4));
-
-            local clamped_angles = angles.yaw;
-            if (clamped_angles < -180) then
-                clamped_angles = clamped_angles + 360;
-            end;
-            if (clamped_angles > 180) then
-                clamped_angles = clamped_angles - 360;
-            end;
-
-            yaw_to_use = cmd.viewangles.yaw;
-            m_strafe_flags = bit.bor(m_strafe_flags, 4);
-            m_last_yaw = clamped_angles;
-
-            if bit.band(m_strafe_flags, 4) ~= 0 then
-                local diff = angles.yaw - yaw_to_use;
-                if (diff < -180) then diff = diff + 360; end;
-                if (diff > 180) then diff = diff - 360; end;
-
-                if (math.abs(diff) > ideal_step and math.abs(diff) <= 30) then
-                    local move = 450;
-                    if (diff < 0) then
-                        move = move * -1;
-                    end;
-
-                    cmd.sidemove = move;
-                    return;
-                end;
-            end;
-
-            local diff = angles.yaw - velocity_yaw;
-            if (diff < -180) then diff = diff + 360; end;
-            if (diff > 180) then diff = diff - 360; end;
-
-            local step = ((100 - 30) * 0.02) * (ideal_step + ideal_step);
-            local sidemove = 0;
-            if (math.abs(diff) > 170 and velocity_len > 80 or diff > step and velocity_len > 80) then
-                angles.yaw = step + velocity_yaw;
-                cmd.sidemove = -450;
-            elseif (-step <= diff or velocity_len <= 80) then
-                if bit.band(m_strafe_flags, 1) ~= 0 then
-                    angles.yaw = angles.yaw - ideal_step;
-                    cmd.sidemove = -450;
-                else
-                    angles.yaw = angles.yaw + ideal_step;
-                    cmd.sidemove = 450;
-                end;
-            else
-                angles.yaw = velocity_yaw - step;
-                cmd.sidemove = 450;
-            end;
-
-            if (not (bit.band(m_strafe_flags, 16) ~= 0) and cmd.sidemove == 0) then
-                print('che naxyi');
-                -- goto DO_IT_AGAIN;
-            end;
-
-            m_strafe_flags = bit.bxor(
-                m_strafe_flags,
-                bit.band(
-                    bit.bxor(m_strafe_flags, bit.bnot(m_strafe_flags)),
-                    1
-                )
-            );
-
-            local rotation = math.rad(cmd.viewangles.yaw - angles.yaw);
-
-            local cos_rot = math.cos(rotation);
-            local sin_rot = math.sin(rotation);
-            local new_forwardmove = (cos_rot * cmd.forwardmove) - (sin_rot * cmd.sidemove);
-            local new_sidemove = (sin_rot * cmd.forwardmove) + (cos_rot * cmd.sidemove);
-
-            cmd.forwardmove = new_forwardmove;
-            cmd.sidemove = new_sidemove;
-        end;
-
-        -- register_callback('create_move', AutoStrafe);
     end;
 
     local console_filter; do

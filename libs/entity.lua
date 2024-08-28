@@ -62,6 +62,8 @@ function entity_t:get_eye_position()
 end;
 
 function entity_t:get_weapon_info()
+    -- Проверку добавить надо на то что это не веапон
+    -- А еще пофиксить эту хуйню ибо оно крашит нахуй
     return native_GetWeaponInfo(ffi.cast('uintptr_t*', self[0])[0]);
 end;
 
@@ -184,10 +186,16 @@ function entity_t:get_hitbox_position(hitbox_index)
 end;
 
 ---Checks whether the entity can be seen by the target
----@param target entity_t
+---@param target? entity_t
 ---@return boolean
 function entity_t:is_visible(target)
+    target = target or entitylist.get_local_player();
+
     if not (target and target:is_alive()) then
+        return false;
+    end;
+
+    if not (self and self:is_alive()) then
         return false;
     end;
 
@@ -207,4 +215,19 @@ function entity_t:is_visible(target)
     end;
 
     return false;
+end;
+
+---@param target? entity_t
+---@return boolean
+function entity_t:is_enemy(target)
+    target = target or entitylist.get_local_player();
+    if not (target and self) then
+        return false;
+    end;
+
+    return target:get_team() ~= self:get_team();
+end;
+
+function entity_t:is_spectator()
+    return self:get_team() == 0;
 end;
