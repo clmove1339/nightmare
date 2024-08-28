@@ -388,7 +388,7 @@ local antiaim = {}; do
                 yaw_desync = handle:combo('Yaw desync##' .. state, { 'Off', 'Static', 'Jitter', 'Random Jitter' }),
                 yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0),
                 enable_fakelag = handle:switch('Enable fakelag##' .. state, false, false, 'Movement/Fakelag'),
-                fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random' }, nil, 'Movement/Fakelag'),
+                fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random', 'Allah' }, nil, 'Movement/Fakelag'),
                 fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
             };
 
@@ -506,7 +506,7 @@ local antiaim = {}; do
                     end;
                 elseif type == 4 then
                     if not cache[2] then
-                        cache[2] = math.random(limit, 15);
+                        cache[2] = math.random(1, limit);
                     end;
 
                     local bSendPacket = choked >= cache[2];
@@ -514,7 +514,15 @@ local antiaim = {}; do
                     cmd.send_packet = bSendPacket;
 
                     if bSendPacket then
-                        cache[2] = math.random(limit, 15);
+                        cache[2] = math.random(1, limit);
+                    end;
+                elseif type == 5 then
+                    local velocity = me:get_velocity();
+
+                    if choked > limit then
+                        cmd.send_packet = true;
+                    else
+                        cmd.send_packet = math.abs(velocity.z) < 10;
                     end;
                 end;
 
