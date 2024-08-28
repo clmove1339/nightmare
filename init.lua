@@ -344,7 +344,7 @@ local antiaim = {}; do
         local in_crouch = duck_amount > 0;
         local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
-        local in_use = input:is_key_pressed(0x45); -- Сомнительно но окээй
+        local in_use = bit.has(cmd.buttons, IN.USE);
 
         if in_use then
             return states[9];
@@ -626,6 +626,9 @@ local antiaim = {}; do
                 local is_grabbing = ffi.cast('int*', me[netvars.m_bIsGrabbingHostage])[0] == 1;
 
                 if is_defusing or is_grabbing then
+                    if antiaim.legit.trigger then
+                        engine.execute_client_cmd('+use');
+                    end;
                     antiaim.legit.trigger = false;
                     return;
                 end;
@@ -1280,10 +1283,13 @@ local skinchanger = {}; do
         end;
 
         local weapon_name = ffi.string(weapon_info.ConsoleName);
-        -- if not gui.weapons[weapon_name] then return; end;
+        local is_knife = weapon_name:find('knife');
+        if not gui.weapons[weapon_name] and not is_knife then
+            return;
+        end;
 
         if not menu.is_visible() or not gui.weapon_selector:is_visible() then
-            if weapon_name:find('knife') then
+            if is_knife then
                 gui.weapon_selector:set(weapon2index['weapon_knife']);
             else
                 gui.weapon_selector:set(weapon2index[weapon_name]);
