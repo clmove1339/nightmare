@@ -32,7 +32,7 @@ require 'libs.vector';
 local engine_client = require 'libs.engine_client';
 local materials = require 'libs.material_system';
 local animation = require 'libs.animation';
-local defensive = require 'libs.defensive';
+local exploit = require 'libs.exploit';
 local inspect = require 'libs.inspect';
 local timers = require 'libs.timers';
 local memory = require 'libs.memory';
@@ -40,6 +40,7 @@ local utils = require 'libs.utils';
 local vmt = require 'libs.vmt';
 local ui = require 'libs.ui';
 local input = require 'libs.input';
+local convar_manager = require 'libs.convar_manager';
 
 --#endregion
 
@@ -120,44 +121,42 @@ local aimbot = {}; do
             local me = entitylist.get_local_player();
             local velocity = me:get_velocity();
 
-            nixware['Ragebot']['Target']['Scout'].min_damage:override(nil);
-            nixware['Ragebot']['Target']['Scout'].hit_chance:override(nil);
-            nixware['Movement']['Movement'].auto_strafer:override(nil);
-            nixware['Ragebot']['Target']['Scout'].auto_stop:override(nil);
-
             if not (me and me:is_alive()) then
                 return;
             end;
 
             local weapon = me:get_active_weapon();
+            if not weapon then
+                return;
+            end;
 
-            if weapon ~= nil then
-                if not weapon:get_class_name():find('SSG08') then
-                    return;
+            if not weapon:get_class_name():find('SSG08') then
+                return;
+            end;
+
+            local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
+            local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
+
+            local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air;
+
+            if input:is_key_pressed(0x20) then
+                if not on_top:get() or math.abs(velocity.z) > 10 or velocity.z == 0 then
+                    active = false;
                 end;
+            end;
 
-                local flags = ffi.cast('int*', me[netvars.m_fFlags])[0];
-                local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
+            aimbot.jump_scout.state = active;
 
-                local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air;
+            if active then
+                local scout = nixware['Ragebot']['Target']['Scout'];
 
-                if input:is_key_pressed(0x20) then
-                    if not on_top:get() or math.abs(velocity.z) > 10 or velocity.z == 0 then
-                        active = false;
-                    end;
-                end;
+                scout.min_damage:override(min_damage:get());
+                scout.hit_chance:override(hitchance:get());
 
-                aimbot.jump_scout.state = active;
-
-                if active then
-                    nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
-                    nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
-
-                    if auto_stop:get() then
-                        nixware['Movement']['Movement'].auto_strafer:override(false);
-                        nixware['Ragebot']['Target']['Scout'].auto_stop:override(false);
-                        self:stop(cmd);
-                    end;
+                if auto_stop:get() then
+                    nixware['Movement']['Movement'].auto_strafer:override(false);
+                    scout.auto_stop:override(false);
+                    self:stop(cmd);
                 end;
             end;
         end;
@@ -599,7 +598,7 @@ local antiaim = {}; do
                     return;
                 end;
 
-                if not defensive:is_active() then
+                if not exploit:is_break_lagcomp() then
                     return;
                 end;
 
@@ -764,17 +763,12 @@ local visualization = {}; do
     end;
 
     local viewmodel_in_scope = {}; do
-        local old_value = cvars.fov_cs_debug:get_int() == 90; -- fov_cs_debug
         local enable = handle:switch('Viewmodel in scope');
+        ---@cast enable -c_tab
 
-        register_callback('paint', function()
-            local enable = enable:get();
-
-            if old_value ~= enable then
-                cvars.fov_cs_debug:set_int(enable and 90 or 0);
-                old_value = enable;
-            end;
-        end);
+        convar_manager.new('Viewmodel in scope', {
+            { 'fov_cs_debug', 90, 0 },
+        }, enable);
     end;
 end;
 
@@ -930,17 +924,22 @@ local misc = {}; do
     end;
 
     local console_filter; do
-        local old_value = cvars.con_filter_enable:get_bool();
         local enable = handle:switch('Enable console filter', true);
+        ---@cast enable -c_tab
 
-        register_callback('paint', function()
-            local enable = enable:get();
-            if old_value ~= enable then
-                cvars.con_filter_enable:set_bool(enable);
-                cvars.con_filter_text:set_string('nightmare');
-                old_value = enable;
-            end;
-        end);
+        convar_manager.new('Console filter', {
+            { 'con_filter_enable', true,        false },
+            { 'con_filter_text',   'nightmare', '' }
+        }, enable);
+    end;
+
+    local disable_panorama_blur; do
+        local enable = handle:switch('Disable panorama blur', true);
+        ---@cast enable -c_tab
+
+        convar_manager.new('Disable panorama blur', {
+            { '@panorama_disable_blur', 1, 0 },
+        }, enable);
     end;
 end;
 
@@ -1307,6 +1306,9 @@ local skinchanger = {}; do
                     skin_changer(me);
                     menu_handler(me);
                 end;
+            end;
+            if stage == FrameStages.FRAME_NET_UPDATE_START then
+                exploit:on_net_update_start();
             end;
         end, print);
     end);

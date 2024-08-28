@@ -41,21 +41,21 @@ local ui = {}; do
         end;
     end;
 
-    ---@type table<menu_item, {element: menu_item, old_value: any, overrided: boolean}>
+    ---@type table<menu_item, {element: menu_item, old?: { [1]: any, [2]: integer }, overrided: boolean}>
     local override_list = {};
 
     ---@param self menu_item
     ---@param value any
     ---@param index? integer
-    ---@return { element: menu_item, old_value: any, overrided: boolean }
+    ---@return { element: menu_item, old?: { [1]: any, [2]: integer }, overrided: boolean }
     local function override(self, value, index)
         local element = self;
         local name = element;
 
-        if override_list[name] == nil then
+        if not override_list[name] then
             override_list[name] = {
                 element = element,
-                old_value = nil,
+                old = nil,
                 overrided = false,
             };
         end;
@@ -65,7 +65,7 @@ local ui = {}; do
 
         if not menu.is_visible() and value ~= nil then
             if not overrided then
-                data.old_value = self:get(index);
+                data.old = { self:get(index), index };
 
                 data.overrided = true;
             end;
@@ -73,13 +73,18 @@ local ui = {}; do
             element:set(unpack({ value, index }));
         else
             if overrided then
-                local value = data.old_value;
-                element:set(unpack({ value, index }));
+                element:set(unpack(data.old));
                 data.overrided = false;
             end;
         end;
 
         return data;
+    end;
+
+    local function reset_override()
+        for element, _ in pairs(override_list) do
+            element:override(nil);
+        end;
     end;
 
     ---@param element any
@@ -172,7 +177,7 @@ local ui = {}; do
 
     ---@diagnostic disable-next-line: circle-doc-class
     ---@class menu_item: menu_item
-    ---@field override fun(self: menu_item, value: any, index?: integer): {element: menu_item, old_value: any, overrided: boolean}
+    ---@field override fun(self: menu_item, value: any, index?: integer): {element: menu_item, old: { value: any, index?: integer }, overrided: boolean}
     ---@field depend fun(self: menu_item, depends: table<table|boolean>): nil
     ---@field connect fun(self: menu_item, connections: table<menu_item|menu_item[]>, value: any): nil Adds a function to the dependency list that manages the visibility of connected elements based on the state of `element`.
 
@@ -356,11 +361,17 @@ local ui = {}; do
     ui.hide(true);
 
     register_callback('paint', function()
+        xpcall(reset_override, print);
         xpcall(ui.handle, print);
+    end);
+
+    register_callback('create_move', function()
+        xpcall(reset_override, print);
     end);
 
     register_callback('unload', function()
         ui.hide(false);
+        xpcall(reset_override, print);
     end);
 end;
 
