@@ -343,7 +343,7 @@ local antiaim = {}; do
         local in_crouch = duck_amount > 0;
         local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
-        local in_use = bit.has(cmd.buttons, IN.USE);
+        local in_use = bit.has(cmd.buttons, IN.USE); -- ЕБУЧИЕ ФИКСИКИ СУКАААА input:is_key_pressed(0x45)
 
         if in_use then
             return states[9];
