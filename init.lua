@@ -1,5 +1,6 @@
 --#region: Pre load
 local LOAD_TIME = os.clock();
+math.randomseed(os.time());
 --#endregion
 
 --#region: package.path
@@ -905,6 +906,7 @@ local misc = {}; do
 end;
 
 local skinchanger = {}; do
+    -- Снизу все обосрано и обдристано. НЕ ПРИБЛИЖАТЬСЯ ЕСЛИ НЕ УВЕРЕНЫ ЧТО ВЫ ДЕЛАЕТЕ!!! ИНАЧЕ МОЖЕТ СРАСТИСЬ С ДЕРЬМОМ!!!
     local weapon_data = require 'libs.weapon_skins';
 
     local weapon_names = {
@@ -913,15 +915,30 @@ local skinchanger = {}; do
         'weapon_m249', 'weapon_m4a1', 'weapon_m4a1_silencer', 'weapon_mac10', 'weapon_mag7', 'weapon_mp5sd',
         'weapon_mp7', 'weapon_mp9', 'weapon_negev', 'weapon_nova', 'weapon_hkp2000', 'weapon_p250', 'weapon_p90',
         'weapon_revolver', 'weapon_sawedoff', 'weapon_scar20', 'weapon_ssg08', 'weapon_sg556', 'weapon_tec9',
-        'weapon_ump45', 'weapon_usp_silencer', 'weapon_xm1014'
+        'weapon_ump45', 'weapon_usp_silencer', 'weapon_xm1014',
+        'weapon_knife'
     };
 
     local formatted_weapon_names = {
         'AK-47', 'AUG', 'AWP', 'PP-Bizon', 'CZ75-Auto', 'Desert Eagle', 'Dual Berettas', 'FAMAS', 'Five-SeveN',
         'G3SG1', 'Galil AR', 'Glock-18', 'M249', 'M4A4', 'M4A1-S', 'MAC-10', 'MAG-7', 'MP5-SD', 'MP7', 'MP9',
         'Negev', 'Nova', 'P2000', 'P250', 'P90', 'R8 Revolver', 'Sawed-Off', 'SCAR-20', 'SSG 08', 'SG 553',
-        'Tec-9', 'UMP-45', 'USP-S', 'XM1014'
+        'Tec-9', 'UMP-45', 'USP-S', 'XM1014',
+        'Knife',
     };
+
+    local knife_names = {
+        'weapon_knife', 'weapon_knife_t', 'weapon_bayonet', 'weapon_knife_flip', 'weapon_knife_gut',
+        'weapon_knife_karambit', 'weapon_knife_m9_bayonet', 'weapon_knife_tactical', 'weapon_knife_falchion',
+        'weapon_knife_survival_bowie', 'weapon_knife_butterfly', 'weapon_knife_push'
+    };
+
+    local formatted_knife_name = {
+        'Knife', 'Knife (Terrorist)', 'Bayonet', 'Flip Knife', 'Gut Knife',
+        'Karambit', 'M9 Bayonet', 'Huntsman Knife', 'Falchion Knife',
+        'Bowie Knife', 'Butterfly Knife', 'Shadow Daggers'
+    };
+
 
     local native_GetWeaponInfo = ffi.cast('weapon_info_t*(__thiscall*)(uintptr_t)', find_pattern('client.dll', '55 8B EC 81 EC 0C 01 ? ? 53 8B D9 56 57 8D 8B'));
 
@@ -933,13 +950,16 @@ local skinchanger = {}; do
 
     local handle = ui.create('Skinchanger');
     local gui = {
-        weapons = {},
+        weapons         = {},
+        knife_selector  = handle:combo('Knife selector', formatted_knife_name),
         weapon_selector = handle:combo('Weapon selector', formatted_weapon_names),
     };
 
+    local last_knife = gui.knife_selector:get();
+
     for i, name in ipairs(weapon_names) do
         local weapon_config = {
-            skin = handle:combo('Skin selector##' .. name, weapon_data[name].skin_names),
+            skin = handle:combo('Skin selector##' .. name, weapon_data[name].skin_names, math.random(0, #weapon_data[name].skin_names - 1)),
             wear = handle:slider_float('Wear ##' .. name, 0.001, 1.0, 0.001),
             seed = handle:slider_int('Seed ##' .. name, 1, 1000, 1),
             custom_color = handle:switch('Custom color ##' .. name),
@@ -950,8 +970,11 @@ local skinchanger = {}; do
             handle:color('Color 4##' .. name, nil, true, false)
         };
 
-        for _, element in pairs(weapon_config) do
-            element:depend({ { gui.weapon_selector, i - 1 }, type(_) == 'number' and { weapon_config.custom_color, true } or nil });
+        for id, element in pairs(weapon_config) do
+            element:depend({
+                { gui.weapon_selector, i - 1 },
+                type(id) == 'number' and { weapon_config.custom_color, true } or nil,
+            });
         end;
 
         gui.weapons[name] = weapon_config;
@@ -1080,50 +1103,6 @@ local skinchanger = {}; do
 
     local IBaseClientDLL = vmt:new(memory:create_interface('client.dll', 'VClient018'));
 
-    local KNIFE_IDXs = {
-        WEAPON_KNIFE_BAYONET = 500,
-        WEAPON_KNIFE_CSS = 503,
-        WEAPON_KNIFE_FLIP = 505,
-        WEAPON_KNIFE_GUT = 506,
-        WEAPON_KNIFE_KARAMBIT = 507,
-        WEAPON_KNIFE_M9_BAYONET = 508,
-        WEAPON_KNIFE_TACTICAL = 509,
-        WEAPON_KNIFE_FALCHION = 512,
-        WEAPON_KNIFE_SURVIVAL_BOWIE = 514,
-        WEAPON_KNIFE_BUTTERFLY = 515,
-        WEAPON_KNIFE_PUSH = 516,
-        WEAPON_KNIFE_CORD = 517,
-        WEAPON_KNIFE_CANIS = 518,
-        WEAPON_KNIFE_URSUS = 519,
-        WEAPON_KNIFE_GYPSY_JACKKNIFE = 520,
-        WEAPON_KNIFE_OUTDOOR = 521,
-        WEAPON_KNIFE_STILETTO = 522,
-        WEAPON_KNIFE_WIDOWMAKER = 523,
-        WEAPON_KNIFE_SKELETON = 525,
-    };
-
-    local KNIFE_MDLs = {
-        [KNIFE_IDXs.WEAPON_KNIFE_BAYONET] = 'models/weapons/v_knife_bayonet.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_FLIP] = 'models/weapons/v_knife_flip.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_GUT] = 'models/weapons/v_knife_gut.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_KARAMBIT] = 'models/weapons/v_knife_karam.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET] = 'models/weapons/v_knife_m9_bay.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_TACTICAL] = 'models/weapons/v_knife_tactical.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_FALCHION] = 'models/weapons/v_knife_falchion_advanced.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_SURVIVAL_BOWIE] = 'models/weapons/v_knife_survival_bowie.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_BUTTERFLY] = 'models/weapons/v_knife_butterfly.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_PUSH] = 'models/weapons/v_knife_push.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_URSUS] = 'models/weapons/v_knife_ursus.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_GYPSY_JACKKNIFE] = 'models/weapons/v_knife_gypsy_jackknife.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_STILETTO] = 'models/weapons/v_knife_stiletto.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_WIDOWMAKER] = 'models/weapons/v_knife_widowmaker.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_CSS] = 'models/weapons/v_knife_css.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_CORD] = 'models/weapons/v_knife_cord.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_CANIS] = 'models/weapons/v_knife_canis.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_OUTDOOR] = 'models/weapons/v_knife_outdoor.mdl',
-        [KNIFE_IDXs.WEAPON_KNIFE_SKELETON] = 'models/weapons/v_knife_skeleton.mdl',
-    };
-
     local WEAPON_KNIFE_DEF_IDX = KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET;
     local WEAPON_KNIFE_MDL_PATH = KNIFE_MDLs[WEAPON_KNIFE_DEF_IDX];
 
@@ -1222,10 +1201,10 @@ local skinchanger = {}; do
                     local weapon_info = native_GetWeaponInfo(weapon);
                     if weapon_info then
                         local weapon_name = ffi.string(weapon_info.ConsoleName);
-                        if gui.weapons[weapon_name] then
-                            apply_skin(weapon, weapon_info);
-                        elseif weapon_name:find('knife') then
+                        if weapon_name:find('knife') then
                             apply_knife_skin(me, weapon);
+                        elseif gui.weapons[weapon_name] then
+                            apply_skin(weapon, weapon_info);
                         end;
                     end;
                 end;
@@ -1240,14 +1219,29 @@ local skinchanger = {}; do
         local weapon = IClientEntityList:GetClientEntityFromHandle(weapon_handle[0]);
         if not weapon then return; end;
 
+        local knife_type = gui.knife_selector:get();
+        if last_knife ~= knife_type then
+            IDX = KNIFE_IDXs[knife_names[knife_type + 1]:upper()];
+            if IDX then
+                local MDL_PATH = KNIFE_MDLs[IDX];
+                WEAPON_KNIFE_DEF_IDX = IDX;
+                WEAPON_KNIFE_MDL_IDX = native_GetModelIndex(MDL_PATH);
+            end;
+            last_knife = knife_type;
+        end;
+
         local weapon_info = native_GetWeaponInfo(weapon);
         if not weapon_info then return; end;
 
         local weapon_name = ffi.string(weapon_info.ConsoleName);
-        if not gui.weapons[weapon_name] then return; end;
+        -- if not gui.weapons[weapon_name] then return; end;
 
         if not menu.is_visible() or not gui.weapon_selector:is_visible() then
-            gui.weapon_selector:set(weapon2index[weapon_name]);
+            if weapon_name:find('knife') then
+                gui.weapon_selector:set(weapon2index['weapon_knife']);
+            else
+                gui.weapon_selector:set(weapon2index[weapon_name]);
+            end;
         end;
     end;
 

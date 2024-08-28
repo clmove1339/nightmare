@@ -144,6 +144,50 @@ FL = {
     UNBLOCKABLE_BY_PLAYER = bit.lshift(1, 31)
 };
 
+KNIFE_IDXs = {
+    WEAPON_KNIFE_BAYONET = 500,
+    WEAPON_KNIFE_CSS = 503,
+    WEAPON_KNIFE_FLIP = 505,
+    WEAPON_KNIFE_GUT = 506,
+    WEAPON_KNIFE_KARAMBIT = 507,
+    WEAPON_KNIFE_M9_BAYONET = 508,
+    WEAPON_KNIFE_TACTICAL = 509,
+    WEAPON_KNIFE_FALCHION = 512,
+    WEAPON_KNIFE_SURVIVAL_BOWIE = 514,
+    WEAPON_KNIFE_BUTTERFLY = 515,
+    WEAPON_KNIFE_PUSH = 516,
+    WEAPON_KNIFE_CORD = 517,
+    WEAPON_KNIFE_CANIS = 518,
+    WEAPON_KNIFE_URSUS = 519,
+    WEAPON_KNIFE_GYPSY_JACKKNIFE = 520,
+    WEAPON_KNIFE_OUTDOOR = 521,
+    WEAPON_KNIFE_STILETTO = 522,
+    WEAPON_KNIFE_WIDOWMAKER = 523,
+    WEAPON_KNIFE_SKELETON = 525,
+};
+
+KNIFE_MDLs = {
+    [KNIFE_IDXs.WEAPON_KNIFE_BAYONET] = 'models/weapons/v_knife_bayonet.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_FLIP] = 'models/weapons/v_knife_flip.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_GUT] = 'models/weapons/v_knife_gut.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_KARAMBIT] = 'models/weapons/v_knife_karam.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_M9_BAYONET] = 'models/weapons/v_knife_m9_bay.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_TACTICAL] = 'models/weapons/v_knife_tactical.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_FALCHION] = 'models/weapons/v_knife_falchion_advanced.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_SURVIVAL_BOWIE] = 'models/weapons/v_knife_survival_bowie.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_BUTTERFLY] = 'models/weapons/v_knife_butterfly.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_PUSH] = 'models/weapons/v_knife_push.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_URSUS] = 'models/weapons/v_knife_ursus.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_GYPSY_JACKKNIFE] = 'models/weapons/v_knife_gypsy_jackknife.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_STILETTO] = 'models/weapons/v_knife_stiletto.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_WIDOWMAKER] = 'models/weapons/v_knife_widowmaker.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_CSS] = 'models/weapons/v_knife_css.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_CORD] = 'models/weapons/v_knife_cord.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_CANIS] = 'models/weapons/v_knife_canis.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_OUTDOOR] = 'models/weapons/v_knife_outdoor.mdl',
+    [KNIFE_IDXs.WEAPON_KNIFE_SKELETON] = 'models/weapons/v_knife_skeleton.mdl',
+};
+
 TypingSpeeds = {
     ['a'] = 300,
     ['b'] = 250,

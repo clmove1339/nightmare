@@ -1310,5 +1310,41 @@ return {
             ['Zombie Offensive'] = 1135
         },
         skin_names = { 'Blue Steel', 'Grassland', 'Blue Spruce', 'Urban Perforated', 'Blaze Orange', 'Fallout Warning', 'Jungle', 'VariCamo Blue', 'CaliCamo', 'Heaven Guard', 'Red Python', 'Red Leather', 'Bone Machine', 'Tranquility', 'Quicksilver', 'Scumbria', 'Teclu Burner', 'Black Tie', 'Slipstream', 'Seasons', 'Ziggy', 'Oxide Blaze', 'Banana Leaf', 'Frost Borre', 'Elegant Vines', 'Incinegator', 'Entombed', 'Charter', 'Ancient Lore', 'XOXO', 'Blue Tire', 'Watchdog', 'Zombie Offensive', 'Hieroglyph' }
-    }
+    },
+    weapon_knife = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_t = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_bayonet = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_flip = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_gut = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_karambit = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_m9_bayonet = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_tactical = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_falchion = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_survival_bowie = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_butterfly = {
+        skin_ids = {}, skin_names = {}
+    },
+    weapon_knife_push = {
+        skin_ids = {}, skin_names = {}
+    },
 };

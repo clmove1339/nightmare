@@ -264,11 +264,6 @@ math.lerp = function(a, b, t)
     return a + (b - a) * t;
 end;
 
----Initialize random seed
-math.randomize = function()
-    math.randomseed(os.time());
-end;
-
 ---Check if a number is within a specific range
 ---@param x number
 ---@param mn number
