@@ -1277,6 +1277,8 @@ local skinchanger = {}; do
                     end;
                 end;
             end;
+
+            m_nDeltaTick[0] = -1;
         end, print);
     end);
 end;
@@ -1284,7 +1286,7 @@ end;
 --#endregion
 
 --#region: Post load
-engine.execute_client_cmd('clear');
+-- engine.execute_client_cmd('clear');
 utils:play_sound('ui/item_drop.wav');
 printf('welcome back, %s!', get_user_name());
 printf('lua fully initialized in %.3f seconds', os.clock() - LOAD_TIME);
