@@ -47,7 +47,7 @@ local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
 
-    local jump_scout = {}; do
+    aimbot.jump_scout = { state = false }; do
         -- чешем яйца
         local group, enable = handle:switch('Jump scout', nil, true);
 
@@ -55,7 +55,7 @@ local aimbot = {}; do
         local hitchance = group:slider_int('Hit chance', 0, 100, 55);
         local min_damage = group:slider_int('Min damage', 1, 120, nixware['Ragebot']['Target']['Scout'].min_damage:get());
 
-        function jump_scout:threat_hittable()
+        function aimbot.jump_scout:threat_hittable()
             local me = entitylist.get_local_player();
 
             if not me then
@@ -87,7 +87,7 @@ local aimbot = {}; do
             return false;
         end;
 
-        function jump_scout:stop(cmd)
+        function aimbot.jump_scout:stop(cmd)
             local me = entitylist.get_local_player();
 
             if me == nil then
@@ -110,7 +110,7 @@ local aimbot = {}; do
             cmd.sidemove = negated_direction.y;
         end;
 
-        function jump_scout:on_create_move(cmd)
+        function aimbot.jump_scout:on_create_move(cmd)
             local me = entitylist.get_local_player();
 
             nixware['Ragebot']['Target']['Scout'].min_damage:override(nil);
@@ -134,6 +134,8 @@ local aimbot = {}; do
 
                 local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air and not input:is_key_pressed(0x20);
 
+                aimbot.jump_scout.state = active;
+
                 if active then
                     nixware['Ragebot']['Target']['Scout'].min_damage:override(min_damage:get());
                     nixware['Ragebot']['Target']['Scout'].hit_chance:override(hitchance:get());
@@ -148,7 +150,7 @@ local aimbot = {}; do
         end;
 
         register_callback('create_move', function(cmd)
-            xpcall(jump_scout.on_create_move, print, jump_scout, cmd);
+            xpcall(aimbot.jump_scout.on_create_move, print, aimbot.jump_scout, cmd);
         end);
     end;
 
@@ -256,7 +258,13 @@ local aimbot = {}; do
             end;
 
             if state == 'shot' then
-                print('miss shot due to ?');
+                local reason = '?';
+
+                if aimbot.jump_scout.state then
+                    reason = 'jump evaluation';
+                end;
+
+                print(string.format('Miss shot due to %s', reason));
             end;
 
             map[last_update].state = '';
