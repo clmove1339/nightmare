@@ -440,7 +440,7 @@ local antiaim = {}; do
     }, true);
 
     antiaim.general = {}; do
-        local features = handle:multicombo('Features', { 'Anti-backstab', 'Manual anti-aim' });
+        local features = handle:multicombo('Features', { 'Anti-backstab', 'Manual anti-aim', 'Fast ladder' });
 
         local manual = {
             left = handle:keybind('Manual left'),
@@ -453,6 +453,45 @@ local antiaim = {}; do
             master = features,
             [2] = manual
         }, 1);
+
+        function antiaim:fast_ladder(cmd)
+            if not features:get(2) then
+                return;
+            end;
+
+            local me = entitylist.get_local_player();
+            local m_MoveType = ffi.cast('int*', me[0x25C])[0];
+
+            if m_MoveType == 9 then
+                if cmd.forwardmove == 0 then
+                    return;
+                end;
+
+                cmd.viewangles.yaw = engine.get_view_angles().yaw - 90;
+                cmd.viewangles.pitch = 89;
+
+                if cmd.forwardmove > 1 then
+                    cmd.buttons = bit.band(cmd.buttons, bit.bor(cmd.buttons, IN.RIGHT));
+                    cmd.buttons = bit.band(cmd.buttons, bit.bor(cmd.buttons, IN.BACK));
+                    cmd.buttons = bit.band(cmd.buttons, IN.FORWARD);
+                    cmd.buttons = bit.band(cmd.buttons, IN.LEFT);
+                end;
+                if cmd.forwardmove < -1 then
+                    cmd.buttons = bit.band(cmd.buttons, bit.bor(cmd.buttons, IN.LEFT));
+                    cmd.buttons = bit.band(cmd.buttons, bit.bor(cmd.buttons, IN.FORWARD));
+                    cmd.buttons = bit.band(cmd.buttons, IN.BACK);
+                    cmd.buttons = bit.band(cmd.buttons, IN.RIGHT);
+                end;
+            end;
+
+            return;
+        end;
+
+        register_callback('create_move', function(cmd)
+            -- xpcall(function()
+            antiaim:fast_ladder(cmd);
+            -- end, print);
+        end);
     end;
 
     ---@alias PLAYER_STATE string
@@ -1541,6 +1580,7 @@ local skinchanger = {}; do
         end, print);
     end);
 end;
+
 
 --#endregion
 
