@@ -822,6 +822,123 @@ local visualization = {}; do
         }, enable);
     end;
 
+    local grenade_esp = {}; do
+        local group, enable = handle:switch('Grenade ESP', false, true);
+
+        -- local molotov = group:color('Molotov', color_t.new(255 / 255, 177 / 255, 177 / 255, 1), true, true);
+        local smoke = group:switch('Smoke');
+        local smoke_color = group:color('Smoke color', color_t.new(1, 1, 1, 1), false);
+
+        local frag = group:switch('Frag');
+        local frag_color = group:color('Frag color', color_t.new(1, 1, 1, 1), false);
+
+        local FONT = render.fonts.DEFAULT;
+
+        function grenade_esp.on_paint()
+            entitylist.get_entities('CSmokeGrenadeProjectile', false, function(entity)
+                local m_nSmokeEffectTickBegin = ffi.cast('int*', entity[netvars.m_nSmokeEffectTickBegin])[0];
+                local m_bDidSmokeEffect = ffi.cast('bool*', entity[netvars.m_bDidSmokeEffect])[0];
+
+                local active = enable:get() and smoke:get();
+
+                local bar_animation = animation:new(string.format('smoke %s bar', entity[0]), 0, active and m_nSmokeEffectTickBegin ~= 0);
+                local alpha_animation = animation:new(string.format('smoke %s alpha', entity[0]), 0, active and (m_nSmokeEffectTickBegin == 0 or globals.tick_count - (m_nSmokeEffectTickBegin) <= 1140));
+                local radius_animation = animation:new(string.format('smoke %s radius', entity[0]), 0, active and m_bDidSmokeEffect);
+
+                do -- radius
+                    local out_color = smoke_color:get();
+                    local in_color = smoke_color:get();
+                    out_color.a = out_color.a * alpha_animation;
+                    in_color.a = in_color.a * .5 * alpha_animation;
+
+                    render.circle_filled_3d(entity:get_origin(), 145 * radius_animation, in_color);
+                    render.circle_3d(entity:get_origin(), 145 * radius_animation, out_color);
+                end;
+
+                do -- info
+                    local color = smoke_color:get();
+                    color.a = 1 * alpha_animation;
+
+                    local origin = entity:get_origin();
+
+                    local text = 'smoke';
+                    local text_size = render.measure_text(FONT, text);
+
+                    local pct = 1 - (globals.tick_count - (m_nSmokeEffectTickBegin)) / 1155;
+                    local w2s = render.world_to_screen(origin);
+
+                    if w2s then
+                        w2s = w2s - text_size * .5;
+
+                        w2s.x = math.floor(w2s.x + .5);
+                        w2s.y = math.floor(w2s.y + .5);
+
+                        render.text(FONT, w2s, color, 's', text);
+
+                        w2s.y = w2s.y + text_size.y + 2;
+                        text_size.y = 4;
+
+                        render.rect_filled(w2s, w2s + text_size, color_t.new(0, 0, 0, .5 * bar_animation * alpha_animation));
+
+                        text_size.x = (text_size.x - 2) * pct;
+                        text_size.y = text_size.y - 1;
+
+                        local color = smoke_color:get();
+                        color.a = 1 * bar_animation * alpha_animation;
+
+                        render.rect_filled(w2s + 1, w2s + text_size + vec2_t.new(1, 0), color);
+                    end;
+                end;
+            end);
+
+            entitylist.get_entities('CBaseCSGrenade', false, function(entity)
+                local m_nExplodeEffectTickBegin = ffi.cast('int*', entity[netvars.m_nExplodeEffectTickBegin])[0];
+                local m_flSimulationTime = ffi.cast('float*', entity[netvars.m_flSimulationTime])[0];
+                local m_nGrenadeSpawnTime = ffi.cast('float*', entity[netvars.m_nGrenadeSpawnTime])[0];
+
+                local active = enable:get() and frag:get();
+
+                local alpha_animation = animation:new(string.format('frag %s alpha', entity[0]), 0, active and m_nExplodeEffectTickBegin == 0);
+
+                do -- info
+                    local origin = entity:get_origin();
+
+                    local text = 'frag';
+                    local text_size = render.measure_text(FONT, text); -- защита от гномика
+
+                    local pct = 1 - (m_flSimulationTime - m_nGrenadeSpawnTime) / 1.640625;
+                    local w2s = render.world_to_screen(origin);
+
+                    if w2s then
+                        local color = frag_color:get();
+                        color.a = 1 * alpha_animation;
+
+                        w2s = w2s - text_size * .5;
+
+                        w2s.x = math.floor(w2s.x + .5);
+                        w2s.y = math.floor(w2s.y + .5);
+
+                        render.text(FONT, w2s, color, 's', text);
+
+                        w2s.y = w2s.y + text_size.y + 2;
+                        text_size.y = 4;
+
+                        render.rect_filled(w2s, w2s + text_size, color_t.new(0, 0, 0, .5 * alpha_animation));
+
+                        text_size.x = (text_size.x - 2) * pct;
+                        text_size.y = text_size.y - 1;
+
+                        render.rect_filled(w2s + 1, w2s + text_size + vec2_t.new(1, 0), color);
+                    end;
+                end;
+            end);
+        end;
+
+        register_callback('paint', function()
+            xpcall(grenade_esp.on_paint, print);
+        end);
+    end;
+
     local predict = {}; do
         local enable = handle:switch('Show extrapolated position');
 
