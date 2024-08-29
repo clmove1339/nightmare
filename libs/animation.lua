@@ -47,7 +47,7 @@ local animation = {}; do
     ---@param a number
     ---@param b number|boolean
     ---@param t number
-    ---@param easing_fn function|nil
+    ---@param easing_fn? function
     ---@return number
     function animation:interp(a, b, t, easing_fn)
         easing_fn = easing_fn or linear;
@@ -61,9 +61,10 @@ local animation = {}; do
 
     -- На говнокодил шо сисечки писечки
     ---@param name string
-    ---@param a number|nil
+    ---@param a? number
     ---@param b number|boolean
-    ---@param t number|nil
+    ---@param t? number
+    ---@return number
     function animation:new(name, a, b, t)
         a = a or 0; t = t or .05;
 

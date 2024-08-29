@@ -263,7 +263,9 @@ function entitylist.get_players(alive, enemy, esp)
 
         if player then
             if (not alive or player:is_alive()) and (not enemy or player:is_enemy()) then
-                table.insert(list, player);
+                if not player:is_spectator() then
+                    table.insert(list, player);
+                end;
             end;
         end;
     end;

@@ -185,6 +185,25 @@ local aimbot = {}; do
     }; do
         local enable = handle:switch('Enable aimbot indicator', false);
 
+        local old_text = '';
+
+        local colors = {
+            background = color_t.new(.1, .1, .1, 0.8),
+            upper_left = color_t.new(1, 0.4, 0.4, 0.6),
+            upper_right = color_t.new(0.4, 1, 0.4, 0.6),
+            bottom_right = color_t.new(0.4, 0.4, 1, 0.6),
+            bottom_left = color_t.new(1, 1, 0.4, 0.6)
+        };
+
+        local base_colors = {
+            color_t.new(1, 0.4, 0.4, 0.6),
+            color_t.new(0.4, 1, 0.4, 0.6),
+            color_t.new(0.4, 0.4, 1, 0.6),
+            color_t.new(1, 1, 0.4, 0.6)
+        };
+
+        previous_phase = 1;
+
         function aimbot.indicator:get_best_target()
             local me = entitylist.get_local_player();
             if not (me and me:is_alive()) then
@@ -192,8 +211,6 @@ local aimbot = {}; do
             end;
 
             local players = entitylist.get_players(true, true, true);
-            print(#players);
-
             if #players == 0 then
                 return;
             end;
@@ -205,31 +222,27 @@ local aimbot = {}; do
             };
 
             local my_origin = me:get_origin();
-            local zero_vector = vec3_t.new(0, 0, 0);
 
             for _, player in pairs(players) do
                 local is_visible = player:is_visible(me);
                 local origin = player:get_origin();
                 local distance = origin:dist(my_origin);
-                local is_gnomik = origin == zero_vector;
 
-                if not is_gnomik then
-                    if is_visible then
-                        if distance < best.distance then
-                            best.distance = distance;
-                            best.is_visible = true;
-                            best.entity = player;
-                        end;
-                    else
-                        if not best.is_visible and distance < best.distance then
-                            best.distance = distance;
-                            best.entity = player;
-                        end;
+                if is_visible then
+                    if distance < best.distance then
+                        best.distance = distance;
+                        best.is_visible = true;
+                        best.entity = player;
+                    end;
+                else
+                    if not best.is_visible and distance < best.distance then
+                        best.distance = distance;
+                        best.entity = player;
                     end;
                 end;
             end;
 
-            return ternary(best.entity, best, nil);
+            return best;
         end;
 
         function aimbot.indicator:update_state(best)
@@ -248,7 +261,7 @@ local aimbot = {}; do
                 local brainless_time = math.abs(aimbot.indicator.think_time);
 
                 if brainless_time > aimbot.indicator.next_think_time then
-                    aimbot.indicator.think_time = math.random() * 2;
+                    aimbot.indicator.think_time = 1 + math.random() * 2;
                 end;
             end;
 
@@ -266,6 +279,29 @@ local aimbot = {}; do
             return aimbot.indicator.state;
         end;
 
+        function aimbot.indicator:animate()
+            local phase = math.floor(globals.frame_count % 128 / 32) + 1;
+            local phases = {
+                phase,
+                (phase % 4) + 1,
+                (phase + 1) % 4 + 1,
+                (phase + 2) % 4 + 1
+            };
+
+            colors.upper_left = colors.upper_left:lerp(base_colors[phases[1]], 0.1);
+            colors.upper_right = colors.upper_right:lerp(base_colors[phases[2]], 0.1);
+            colors.bottom_right = colors.bottom_right:lerp(base_colors[phases[3]], 0.1);
+            colors.bottom_left = colors.bottom_left:lerp(base_colors[phases[4]], 0.1);
+
+            if previous_phase == 4 and phase == 1 then
+                for i = 1, #base_colors do
+                    base_colors[i] = color_t.new(math.random(), math.random(), math.random(), math.random());
+                end;
+            end;
+
+            previous_phase = phase;
+        end;
+
         function aimbot.indicator:draw()
             if not enable:get() then
                 return;
@@ -276,30 +312,66 @@ local aimbot = {}; do
                 return;
             end;
 
+            aimbot.indicator:animate();
+
             local best = aimbot.indicator:get_best_target();
             local state = aimbot.indicator:update_state(best);
 
-            local text = {
-                'state - ' .. state .. aimbot.indicator.postfix
-            };
-
-            print(best);
+            local static_text = 'State: ' .. state .. aimbot.indicator.postfix;
+            local dynamic_text;
 
             if best then
                 local player_info = best.entity:get_player_info();
-                table.insert(text, 'target - ' .. player_info.name);
+                dynamic_text = string.format('Target: %s\nDistance: %.1f', player_info.name, best.distance);
             end;
 
-            text = table.concat(text, '\n');
+            ---@diagnostic disable-next-line: cast-local-type
+            local static_text_size = render.measure_text(font.text[18], static_text);
+            local dynamic_text_size = vec2_t.new(0, 0);
 
-            local size = vec2_t.new(200, 50);
-            local padding = vec2_t.new(5, 2);
+            if dynamic_text then
+                dynamic_text_size = render.measure_text(font.text[18], dynamic_text);
+            end;
 
+            local text_size = static_text_size + dynamic_text_size;
+
+            local width = animation:new('@aimbot.indicator.width', 0, math.max(200, static_text_size.x, dynamic_text_size.x), 0.1);
+            local height = animation:new('@aimbot.indicator.height', 0, math.max(10, text_size.y + 10), 0.1);
+            local fade = animation:new('@aimbot.indicator.fade', 0, best and 1 or 0, 0.1);
+            local alpha = fade * 255;
+
+            local size = vec2_t.new(width, height);
+            local padding = vec2_t.new(5, 5);
             local min = vec2_t.new(10, screen.y * 0.5);
             local max = min + size;
 
-            render.rect_filled(min, max, color_t.new(.05, .05, .05, 0.8), 4);
-            render.text(font.text[18], min + padding, color_t.new(1, 1, 1, 1), '', text);
+            for i = 1, 10 do
+                local weight = math.exp(-5 * i / 10);
+
+                render.rect_filled_fade(
+                    min - i, max + i,
+                    colors.upper_left:alpha_modulatef(weight),
+                    colors.upper_right:alpha_modulatef(weight),
+                    colors.bottom_right:alpha_modulatef(weight),
+                    colors.bottom_left:alpha_modulatef(weight)
+                );
+            end;
+
+            render.push_clip_rect(min, max);
+
+            render.rect_filled(min, max, colors.background, 5);
+            render.text(font.text[18], min + padding, color_t.new(1, 1, 1, 1), '', static_text);
+
+            if dynamic_text then
+                old_text = dynamic_text;
+            end;
+
+            if dynamic_text or alpha > 1 then
+                local offset = vec2_t.new(0, static_text_size.y);
+                render.text(font.text[18], min + padding + offset, color_t.new(1, 1, 1, fade), '', old_text);
+            end;
+
+            render.pop_clip_rect();
         end;
 
         register_callback('paint', function()
