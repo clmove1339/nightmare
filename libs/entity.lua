@@ -84,6 +84,17 @@ function entity_t:is_grenade()
     return false;
 end;
 
+---@class player_info_t
+---@field xuid { low: integer, high: integer }
+---@field name string
+---@field userid integer
+---@field fake_player boolean
+---@field is_hltv boolean
+---@field custom_files integer[] unsigned int
+---@field files_downloaded integer unsigned char
+---@field [0] ffi.cdata*
+
+---@return player_info_t
 function entity_t:get_player_info()
     local player_info_t_ctype = ffi.new('player_info_t');
     local index = self:get_index();
@@ -245,15 +256,14 @@ end;
 ---@return entity_t[]
 function entitylist.get_players(alive, enemy, esp)
     local list = {};
+    local entities = entitylist.get_entities('CCSPlayer', ternary(esp == nil, false, not esp)); -- о да пенис в попе
 
-    for i = 0, globals.max_clients do
-        local ent = entitylist.get(i);
+    for i = 1, #entities do
+        local player = entities[i];
 
-        if ent then
-            if (not alive or ent:is_alive()) and
-                (not enemy or ent:is_enemy()) and
-                (not esp or not ent:is_dormant()) then
-                table.insert(list, ent);
+        if player then
+            if (not alive or player:is_alive()) and (not enemy or player:is_enemy()) then
+                table.insert(list, player);
             end;
         end;
     end;

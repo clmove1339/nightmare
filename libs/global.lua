@@ -5,6 +5,19 @@ unpack = unpack or table.unpack;
 table.unpack = unpack;
 screen = render.screen_size();
 
+---@generic T
+---@param a any
+---@param b T
+---@param c T
+---@return T
+function ternary(a, b, c)
+    if a then
+        return b;
+    else
+        return c;
+    end;
+end;
+
 ---Checks if a flag is set in a set of flags
 ---@param flags integer The set of flags
 ---@param flag integer The flag to check
