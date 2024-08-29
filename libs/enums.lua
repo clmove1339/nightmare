@@ -23,6 +23,8 @@ netvars = {
     m_bGunGameImmunity     = engine.get_netvar_offset('DT_CSPlayer', 'm_bGunGameImmunity'),
     m_bIsDefusing          = engine.get_netvar_offset('DT_CSPlayer', 'm_bIsDefusing'),
     m_bIsGrabbingHostage   = engine.get_netvar_offset('DT_CSPlayer', 'm_bIsGrabbingHostage'),
+    m_vecMins              = engine.get_netvar_offset('DT_BaseEntity', 'm_vecMins'),
+    m_vecMaxs              = engine.get_netvar_offset('DT_BaseEntity', 'm_vecMaxs'),
     m_vecViewOffset        = 0x108
 };
 
@@ -94,21 +96,29 @@ nixware = {
 };
 
 IN = {
-    ATTACK  = bit.lshift(1, 0),
-    JUMP    = bit.lshift(1, 1),
-    DUCK    = bit.lshift(1, 2),
-    FORWARD = bit.lshift(1, 3),
-    BACK    = bit.lshift(1, 4),
-    USE     = bit.lshift(1, 5),
-    CANCEL  = bit.lshift(1, 6),
-    LEFT    = bit.lshift(1, 7),
-    RIGHT   = bit.lshift(1, 8),
-    MOVE    = bit.lshift(1, 9),
-    SPEED   = bit.lshift(1, 17),
-    AIR     = bit.lshift(1, 18),
-    RELOAD  = bit.lshift(1, 19),
-    ZOOM    = bit.lshift(1, 20),
-    WALK    = bit.lshift(1, 21),
+    ATTACK    = bit.lshift(1, 0),  -- Fire weapon
+    JUMP      = bit.lshift(1, 1),  -- Jump
+    DUCK      = bit.lshift(1, 2),  -- Crouch
+    FORWARD   = bit.lshift(1, 3),  -- Walk forward
+    BACK      = bit.lshift(1, 4),  -- Walk backwards
+    USE       = bit.lshift(1, 5),  -- Use (Defuse bomb, etc...)
+    CANCEL    = bit.lshift(1, 6),  -- Cancel action
+    LEFT      = bit.lshift(1, 7),  -- Walk left
+    RIGHT     = bit.lshift(1, 8),  -- Walk right
+    MOVELEFT  = bit.lshift(1, 9),  -- Alias for walk left (or specific action)
+    MOVERIGHT = bit.lshift(1, 10), -- Alias for walk right (or specific action)
+    ATTACK2   = bit.lshift(1, 11), -- Secondary fire (Revolver, Glock change fire mode, Famas change fire mode)
+    RUN       = bit.lshift(1, 12), -- Run action
+    RELOAD    = bit.lshift(1, 13), -- Reload weapon
+    ALT1      = bit.lshift(1, 14), -- Alternate action 1
+    ALT2      = bit.lshift(1, 15), -- Alternate action 2
+    SCORE     = bit.lshift(1, 16), -- Display score
+    SPEED     = bit.lshift(1, 17), -- Speed action (Sprint)
+    WALK      = bit.lshift(1, 18), -- Walk (Shift)
+    ZOOM      = bit.lshift(1, 19), -- Zoom weapon
+    WEAPON1   = bit.lshift(1, 20), -- Weapon slot 1
+    WEAPON2   = bit.lshift(1, 21), -- Weapon slot 2
+    BULLRUSH  = bit.lshift(1, 22), -- Bullrush action (specific to certain games or mechanics)
 };
 
 FL = {

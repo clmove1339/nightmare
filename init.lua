@@ -41,6 +41,7 @@ local vmt = require 'libs.vmt';
 local ui = require 'libs.ui';
 local input = require 'libs.input';
 local convar_manager = require 'libs.convar_manager';
+local extrapolation = require 'libs.extrapolation';
 
 --#endregion
 
@@ -382,7 +383,7 @@ local antiaim = {}; do
         local in_crouch = duck_amount > 0;
         local in_air = bit.has(cmd.buttons, IN.JUMP) or bit.hasnt(flags, FL.ONGROUND);
         local in_speed = bit.has(cmd.buttons, IN.SPEED);
-        local in_use = bit.has(cmd.buttons, IN.USE);
+        local in_use = bit.has(cmd.buttons, IN.USE); -- ЕБУЧИЕ ФИКСИКИ СУКАААА input:is_key_pressed(0x45)
 
         if in_use then
             return states[9];
@@ -427,7 +428,7 @@ local antiaim = {}; do
                 yaw_desync = handle:combo('Yaw desync##' .. state, { 'Off', 'Static', 'Jitter', 'Random Jitter' }),
                 yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0),
                 enable_fakelag = handle:switch('Enable fakelag##' .. state, false, false, 'Movement/Fakelag'),
-                fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random', 'Allah' }, nil, 'Movement/Fakelag'),
+                fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random', 'Allah', 'Fake peek' }, nil, 'Movement/Fakelag'),
                 fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
             };
 
@@ -517,6 +518,8 @@ local antiaim = {}; do
                 local limit = state.fakelag_limit:get();
 
                 local choked = globals.choked_commands;
+                local velocity = me:get_velocity();
+                local speed = velocity:length2d();
 
                 if type == 0 then
                     cmd.send_packet = true;
@@ -533,8 +536,6 @@ local antiaim = {}; do
                         cache[1] = bSendPacket;
                     end;
                 elseif type == 3 then
-                    local velocity = me:get_velocity();
-                    local speed = math.sqrt(velocity.x ^ 2 + velocity.y ^ 2 + velocity.z ^ 2);
                     local speed_per_tick = speed * globals.interval_per_tick;
                     local lag_for_lc = math.floor(64 / speed_per_tick) + 2;
 
@@ -556,19 +557,24 @@ local antiaim = {}; do
                         cache[2] = math.random(1, limit);
                     end;
                 elseif type == 5 then
-                    local velocity = me:get_velocity();
-
-                    if choked > limit then
+                    if choked >= limit then
                         cmd.send_packet = true;
                     else
                         cmd.send_packet = math.abs(velocity.z) < 10;
+                    end;
+                elseif type == 6 then
+                    local in_move = bit.band(cmd.buttons, IN.BACK + IN.FORWARD + IN.MOVELEFT + IN.MOVERIGHT) ~= 0;
+
+                    if speed > 200 then
+                        cmd.send_packet = in_move and choked >= math.floor(limit / 4) or choked >= limit;
+                    else
+                        cmd.send_packet = choked >= limit;
                     end;
                 end;
 
                 if cmd.send_packet then
                     local origin = me:get_origin();
-                    local dx, dy, dz = origin.x - server_origin.x, origin.y - server_origin.y, origin.z - server_origin.z;
-                    local distance = math.sqrt(dx ^ 2 + dy ^ 2 + dz ^ 2);
+                    local distance = origin:dist(server_origin);
 
                     if _DEV then
                         printf('lc: %s', distance > 64);
@@ -629,6 +635,11 @@ local antiaim = {}; do
             ---@param settings CState
             ---@param cmd user_cmd_t
             antiaim.defensive.handle = function(settings, cmd)
+                local me = entitylist.get_local_player();
+                if not (me and me:is_alive()) then
+                    return;
+                end;
+
                 if bit.has(cmd.buttons, IN.ATTACK) then
                     return;
                 end;
@@ -643,8 +654,9 @@ local antiaim = {}; do
 
                 local pitch_type = settings.defensive_pitch:get();
                 local modifier_type = settings.defensive_yaw:get();
+                local m_MoveType = ffi.cast('int*', me[0x25C])[0];
 
-                if pitch_type ~= 0 then
+                if pitch_type ~= 0 and (m_MoveType ~= 8 or m_MoveType ~= 9) then
                     source.pitch:set(0);
                     cmd.viewangles.pitch = antiaim.defensive.calculate_pitch(settings, pitch_type);
                 end;
@@ -808,6 +820,32 @@ local visualization = {}; do
         convar_manager.new('Viewmodel in scope', {
             { 'fov_cs_debug', 90, 0 },
         }, enable);
+    end;
+
+    local predict = {}; do
+        local enable = handle:switch('Show extrapolated position');
+
+        local function main()
+            if not enable:get() then
+                return;
+            end;
+
+            local me = entitylist.get_local_player();
+            if not (me and me:is_alive()) then
+                return;
+            end;
+
+            local position = extrapolation.get(me);
+            if not position then
+                return;
+            end;
+
+            render.circle_3d(position, 15, color_t.new(1, 1, 1, 1));
+        end;
+
+        register_callback('paint', function()
+            xpcall(main, print);
+        end);
     end;
 end;
 
@@ -979,6 +1017,49 @@ local misc = {}; do
         convar_manager.new('Disable panorama blur', {
             { '@panorama_disable_blur', 1, 0 },
         }, enable);
+    end;
+
+    local fast_stop = {}; do
+        local enable = handle:switch('Fast stop');
+
+        local function main(cmd)
+            if not enable:get() then
+                return;
+            end;
+
+            local me = entitylist.get_local_player();
+
+            if not (me and me:is_alive()) then
+                return;
+            end;
+
+            local in_move = bit.band(cmd.buttons, IN.BACK + IN.FORWARD + IN.MOVELEFT + IN.MOVERIGHT) ~= 0;
+            if in_move then
+                return;
+            end;
+
+            local flags = me:get_flags();
+            if bit.hasnt(flags, FL.ONGROUND) or bit.has(cmd.buttons, IN.JUMP) then
+                return;
+            end;
+
+            local velocity = me:get_velocity();
+            local speed = velocity:length2d();
+
+            if speed <= 15 then
+                return;
+            end;
+
+            local direction = velocity:to_angle();
+            direction.yaw = normalize_yaw(cmd.viewangles.yaw - direction.yaw);
+
+            local negated_direction = direction:forward() * -speed;
+
+            cmd.forwardmove = negated_direction.x;
+            cmd.sidemove = negated_direction.y;
+        end;
+
+        register_callback('create_move', main);
     end;
 end;
 
