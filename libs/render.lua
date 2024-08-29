@@ -47,7 +47,7 @@ local function render_text(text, font, pos, color, size)
     local position = vec2_t.new(pos.x, pos.y);
 
     if color == color_t.new(.1, .1, .1, color.a) then
-        return render.text(text:gsub('\a(%x%x%x%x%x%x%x%x)', ''):gsub('\adefault', ''), font, position, color, size);
+        return o_render_text(text:gsub('\a(%x%x%x%x%x%x%x%x)', ''):gsub('\adefault', ''), font, position, color, size);
     end;
 
     if text:find('\a') then
@@ -100,7 +100,7 @@ function render.text(font, position, color, flags, ...)
     end;
 
     if flags:find('s') then
-        shadow_color.a = color.a * 0.75;
+        -- shadow_color.a = color.a * 0.75;
         render_text(text, font, vec2_t.new(position.x + 1, position.y + 1), shadow_color);
     end;
 
