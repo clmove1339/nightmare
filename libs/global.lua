@@ -296,6 +296,10 @@ function math.round(num, idp)
     return math.floor(num * mult + 0.5) / mult;
 end;
 
+---@param x number
+---@param min number
+---@param max number
+---@return number
 function normalize(x, min, max)
     if x < min or x > max then
         local delta = max - min;
@@ -307,6 +311,8 @@ function normalize(x, min, max)
     return x;
 end;
 
+---@param x number
+---@return number
 function normalize_yaw(x)
     return normalize(x, -180, 180);
 end;

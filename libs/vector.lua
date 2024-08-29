@@ -83,9 +83,9 @@ end;
 ---@field forward fun(self: vec3_t): vec3_t Returns the normalized vector representing the direction of this vector.
 ---@field angles fun(pitch: number, yaw: number): vec3_t Creates a vector from the given angles (pitch - vertical angle, yaw - horizontal angle).
 ---@field dist fun(self: vec3_t, vector: vec3_t): number Returns the distance between this vector and another vector.
----@field length2d_sqr fun(self: vec3_t): number
----@field dot fun(self: vec3_t): number
----@field transform fun(self: vec3_t, matrix: table)
+---@field length2d_sqr fun(self: vec3_t): number Returns the squared length of the vector in the XY plane (2D).
+---@field dot fun(self: vec3_t): number Calculates the dot product of two vectors.
+---@field transform fun(self: vec3_t, matrix: number[]) Transforms the vector by a given transformation matrix.
 
 function vec3_t:unpack()
     return self.x, self.y, self.z;
@@ -218,7 +218,7 @@ end;
 --#region: angle_t
 ---@diagnostic disable-next-line: circle-doc-class
 ---@class angle_t: angle_t
----@field forward fun(self: angle_t): vec3_t Returns the normalized vector representing the direction of this vector.
+---@field forward fun(self: angle_t): vec3_t Converts the angle to a forward-facing directional vector.
 
 function angle_t:forward()
     local pitch_rad = math.rad(self.pitch);

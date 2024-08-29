@@ -26,6 +26,11 @@ function entity_t:get_velocity()
     );
 end;
 
+---@return number
+function entity_t:get_flags()
+    return ffi.cast('int*', self[netvars.m_fFlags])[0];
+end;
+
 ---@return integer
 function entity_t:get_team()
     return ffi.cast('int*', self[netvars.m_iTeamNum])[0];
@@ -232,4 +237,26 @@ end;
 
 function entity_t:is_spectator()
     return self:get_team() == 0;
+end;
+
+---@param alive? boolean
+---@param enemy? boolean
+---@param esp? boolean
+---@return entity_t[]
+function entitylist.get_players(alive, enemy, esp)
+    local list = {};
+
+    for i = 0, globals.max_clients do
+        local ent = entitylist.get(i);
+
+        if ent then
+            if (not alive or ent:is_alive()) and
+                (not enemy or ent:is_enemy()) and
+                (not esp or not ent:is_dormant()) then
+                table.insert(list, ent);
+            end;
+        end;
+    end;
+
+    return list;
 end;
