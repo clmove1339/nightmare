@@ -38,7 +38,16 @@
     "tasks": {
         "version": "2.0.0",
         "tasks": [
-            // add luabundler task
+            {
+                "label": "build",
+                "type": "shell",
+                "command": "luabundler bundle init.lua -p \"./?.lua\" -p \"./libs/?.lua\" -o nightmare-bundled.lua",
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                },
+                "problemMatcher": []
+            }
         ]
     }
 }

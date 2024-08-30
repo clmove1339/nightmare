@@ -33,9 +33,10 @@ local ui = {}; do
                 end;
 
                 if not visible then
-                    break;
+                    goto brk;
                 end;
             end;
+            ::brk::
 
             element:set_visible(element:is_visible() and visible);
         end;
@@ -339,9 +340,12 @@ local ui = {}; do
         for i, tab in ipairs(tabs) do
             if tab.name == name then
                 table.remove(tabs, i);
-                break;
+                -- break;
+                goto brk;
             end;
         end;
+
+        ::brk::
     end;
 
     function ui.handle()
