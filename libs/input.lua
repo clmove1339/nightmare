@@ -1,5 +1,3 @@
-local ffi = require 'ffi';
-
 local input = {}; do
     local keys = {};
 

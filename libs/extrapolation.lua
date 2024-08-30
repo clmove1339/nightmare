@@ -44,19 +44,21 @@ local entity_manager = { data = {} }; do
                     for i = 1, 64 do
                         local lp_prev_tick = entity_manager.data[tickcount - i];
                         if not lp_prev_tick then
-                            break;
+                            goto brk;
                         end;
 
                         local lp_prev_data = lp_prev_tick[my_index];
                         if not lp_prev_data then
-                            break;
+                            goto brk;
                         end;
 
                         if lp_prev_data.lag_time == 0 then
                             abs, vel, min, max = lp_prev_data.abs, lp_prev_data.vel, lp_prev_data.min, lp_prev_data.max;
-                            break;
+                            goto brk;
                         end;
                     end;
+
+                    ::brk::
                 end;
 
                 entity_manager.data[tickcount][index] = {

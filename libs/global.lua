@@ -61,7 +61,9 @@ function typeof(v)
     return vtype;
 end;
 
-ffi = require 'ffi'; do
+local ffi = ffi; do ---@cast ffi ffilib
+    _G.ffi = ffi;
+
     ffi.cdef [[
         void* GetModuleHandleA(const char*);
         void* GetProcAddress(void*, const char*);
