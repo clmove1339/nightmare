@@ -41,6 +41,7 @@ local vmt = require 'libs.vmt';
 local ui = require 'libs.ui';
 local input = require 'libs.input';
 local convar_manager = require 'libs.convar_manager';
+local entity_manager = require 'libs.entity_manager';
 local extrapolation = require 'libs.extrapolation';
 
 local font = {
@@ -56,7 +57,6 @@ local font = {
 --#endregion
 
 --#region: Main
-
 local aimbot = {}; do
     ---@private
     local handle = ui.create('Aimbot');
@@ -180,12 +180,12 @@ local aimbot = {}; do
     aimbot.indicator = {
         state = 'Chilling',
         postfix = '',
-        think_time = 0,
-        next_think_time = 5,
+        time = 0,
     }; do
         local enable = handle:switch('Enable aimbot indicator', false);
 
-        local old_text = '';
+        local old_text = {};
+        local previous_phase = 1;
 
         local colors = {
             background = color_t.new(.1, .1, .1, 0.8),
@@ -201,8 +201,6 @@ local aimbot = {}; do
             color_t.new(0.4, 0.4, 1, 0.6),
             color_t.new(1, 1, 0.4, 0.6)
         };
-
-        previous_phase = 1;
 
         function aimbot.indicator:get_best_target()
             local me = entitylist.get_local_player();
@@ -249,24 +247,13 @@ local aimbot = {}; do
             local dt = globals.frame_time;
             local is_visible = best and best.is_visible;
 
-            aimbot.indicator.think_time = aimbot.indicator.think_time - dt;
+            aimbot.indicator.time = aimbot.indicator.time + dt;
+            aimbot.indicator.postfix = '';
+            aimbot.indicator.state = 'Chilling';
 
-            if aimbot.indicator.think_time > 0 and not is_visible then
-                aimbot.indicator.state = 'Thinking';
-                aimbot.indicator.next_think_time = math.random(1, 5);
-                goto escape;
-            end;
-
-            if aimbot.indicator.think_time < 0 then
-                local brainless_time = math.abs(aimbot.indicator.think_time);
-
-                if brainless_time > aimbot.indicator.next_think_time then
-                    aimbot.indicator.think_time = 1 + math.random() * 2;
-                end;
-            end;
-
-            if not best then
-                aimbot.indicator.state = 'Chilling';
+            if best and not is_visible then
+                aimbot.indicator.state = 'Analyzing';
+                aimbot.indicator.postfix = string.rep('.', math.floor(aimbot.indicator.time * 2 % 4));
                 goto escape;
             end;
 
@@ -275,12 +262,28 @@ local aimbot = {}; do
                 goto escape;
             end;
 
+            aimbot.indicator.time = 0;
             ::escape::
             return aimbot.indicator.state;
         end;
 
+        ---@param data tick_data
+        ---@return string
+        function aimbot.indicator:lagcomp(data)
+            local on_fakelag = data.lag_time > 0;
+            local on_defensive = data.defensive_ticks > 0;
+
+            if on_defensive then
+                return 'Defensive';
+            elseif on_fakelag then
+                return string.format('Default ( %s )', data.lag_time);
+            end;
+
+            return 'Default';
+        end;
+
         function aimbot.indicator:animate()
-            local phase = math.floor(globals.frame_count % 128 / 32) + 1;
+            local phase = math.floor(globals.real_time * 5 % 4) + 1;
             local phases = {
                 phase,
                 (phase % 4) + 1,
@@ -317,33 +320,42 @@ local aimbot = {}; do
             local best = aimbot.indicator:get_best_target();
             local state = aimbot.indicator:update_state(best);
 
-            local static_text = 'State: ' .. state .. aimbot.indicator.postfix;
-            local dynamic_text;
+            local text = {
+                'State: ' .. state .. aimbot.indicator.postfix,
+            };
 
             if best then
-                local player_info = best.entity:get_player_info();
-                dynamic_text = string.format('Target: %s\nDistance: %.1f', player_info.name, best.distance);
+                local entity = best.entity;
+                local index = entity:get_index();
+                local player_info = entity:get_player_info();
+
+                local velocity = entity:get_velocity();
+                local speed = velocity:length2d();
+
+                table.insert(text, string.format('Target: %s', player_info.name));
+                table.insert(text, string.format('Velocity: %.1f', speed));
+
+                local tick_packet = entity_manager.data[globals.tick_count - 1];
+                local data = tick_packet and tick_packet[index];
+
+                if data then
+                    local lag_comp = aimbot.indicator:lagcomp(data);
+                    table.insert(text, string.format('LC: %s', lag_comp));
+                end;
             end;
 
             ---@diagnostic disable-next-line: cast-local-type
-            local static_text_size = render.measure_text(font.text[18], static_text);
-            local dynamic_text_size = vec2_t.new(0, 0);
+            local text_size = render.measure_text(font.text[18], table.concat(text, '\n'));
 
-            if dynamic_text then
-                dynamic_text_size = render.measure_text(font.text[18], dynamic_text);
-            end;
-
-            local text_size = static_text_size + dynamic_text_size;
-
-            local width = animation:new('@aimbot.indicator.width', 0, math.max(200, static_text_size.x, dynamic_text_size.x), 0.1);
+            local width = animation:new('@aimbot.indicator.width', 0, math.max(200, text_size.x), 0.1);
             local height = animation:new('@aimbot.indicator.height', 0, math.max(10, text_size.y + 10), 0.1);
-            local fade = animation:new('@aimbot.indicator.fade', 0, best and 1 or 0, 0.1);
-            local alpha = fade * 255;
 
             local size = vec2_t.new(width, height);
-            local padding = vec2_t.new(5, 5);
             local min = vec2_t.new(10, screen.y * 0.5);
             local max = min + size;
+
+            local padding = vec2_t.new(5, 5);
+            local offset = vec2_t.new(0, 0);
 
             for i = 1, 10 do
                 local weight = math.exp(-5 * i / 10);
@@ -357,21 +369,52 @@ local aimbot = {}; do
                 );
             end;
 
+            -- Подумоем
+            -- render.rect_filled_fade(
+            --     min, max,
+            --     color_t.new(0, 0, 0, colors.upper_left.a),
+            --     color_t.new(0, 0, 0, colors.upper_right.a),
+            --     color_t.new(0, 0, 0, colors.bottom_right.a),
+            --     color_t.new(0, 0, 0, colors.bottom_left.a)
+            -- );
+
             render.push_clip_rect(min, max);
-
             render.rect_filled(min, max, colors.background, 5);
-            render.text(font.text[18], min + padding, color_t.new(1, 1, 1, 1), '', static_text);
 
-            if dynamic_text then
-                old_text = dynamic_text;
+            if #old_text ~= #text then
+                local fade = animation:new('@aimbot.indicator.old', 1, 0, 0.1);
+
+                for i = 1, #old_text do
+                    local line = old_text[i];
+                    local line_size = render.measure_text(font.text[18], line);
+
+                    render.text(font.text[18], min + padding + offset, color_t.new(1, 1, 1, fade), '', line);
+
+                    offset = vec2_t.new(0, offset.y + line_size.y);
+                end;
+
+                if fade < 0.004 then
+                    animation:set('@aimbot.indicator.old', 1);
+                    old_text = text;
+                end;
             end;
 
-            if dynamic_text or alpha > 1 then
-                local offset = vec2_t.new(0, static_text_size.y);
-                render.text(font.text[18], min + padding + offset, color_t.new(1, 1, 1, fade), '', old_text);
+            offset = vec2_t.new(0, 0);
+
+            for i = 1, #text do
+                local line = text[i];
+                local line_size = render.measure_text(font.text[18], line);
+
+                render.text(font.text[18], min + padding + offset, color_t.new(1, 1, 1, 1), '', line);
+
+                offset = vec2_t.new(0, offset.y + line_size.y);
             end;
 
             render.pop_clip_rect();
+
+            if #old_text == 0 or #old_text == #text then
+                old_text = text;
+            end;
         end;
 
         register_callback('paint', function()
@@ -641,16 +684,17 @@ local antiaim = {}; do
                 yaw_desync_length = handle:slider_int('Yaw desync length##' .. state, 0, 60, 0),
                 enable_fakelag = handle:switch('Enable fakelag##' .. state, false, false, 'Movement/Fakelag'),
                 fakelag_type = handle:combo('Fakelag type##' .. state, { 'Off', 'Static', 'Fluctuation', 'Adaptive', 'Random', 'Allah', 'Fake peek' }, nil, 'Movement/Fakelag'),
-                fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 16, 0, 'Movement/Fakelag'),
+                fakelag_limit = handle:slider_int('Fakelag limit##' .. state, 0, 17, 0, 'Movement/Fakelag'),
             };
 
             local defensive_class, defensive_switch = handle:switch('Defensive settings [  ]##' .. state, nil, true);
 
             info.defensive = defensive_switch;
-            info.defensive_pitch = defensive_class:combo('Pitch##' .. state, { 'Off', 'Custom', 'Random', 'Jitter', 'RAKETA' });
-            info.defensive_pitch_value = defensive_class:slider_int('Pitch value##' .. state, -89, 89, 0);
-            info.defensive_yaw = defensive_class:combo('Yaw modifier##' .. state, { 'Off', 'Opposite', 'Spin', 'Random' });
-            info.defensive_spin_speed = defensive_class:slider_int('Spin speed##' .. state, 0, 180, 0);
+            info.defensive_pitch = defensive_class:combo('Pitch##def' .. state, { 'Off', 'Local', 'Custom', 'Random', 'Jitter', 'RAKETA' });
+            info.defensive_pitch_value = defensive_class:slider_int('Pitch value##def' .. state, -89, 89, 0);
+            info.defensive_yaw = defensive_class:combo('Yaw modifier##def' .. state, { 'Off', 'Offset', 'Opposite', 'Spin', 'Random' });
+            info.defensive_offset = defensive_class:slider_int('Yaw offset##def' .. state, -180, 180, 0);
+            info.defensive_spin_speed = defensive_class:slider_int('Spin speed##def' .. state, 0, 180, 0);
 
             state_selector:connect({
                 master = info.override,
@@ -680,6 +724,7 @@ local antiaim = {}; do
                 },
                 {
                     master = info.defensive_yaw,
+                    [2] = info.defensive_offset,
                     [3] = info.defensive_spin_speed
                 }
             }, index);
@@ -801,8 +846,6 @@ local antiaim = {}; do
 
         antiaim.defensive = {}; do
             local cache = { false, 0 };
-            -- 'Off', 'Custom', 'Random', 'Jitter', 'RAKETA'
-            -- 'Off' 'Opposite', 'Spin', 'Random'
 
             ---@param settings CState
             ---@param type integer
@@ -811,15 +854,29 @@ local antiaim = {}; do
                 local value = settings.defensive_pitch_value:get();
 
                 if type == 1 then
-                    return value;
+                    return engine.get_view_angles().pitch;
                 elseif type == 2 then
-                    return math.random(-math.abs(value), math.abs(value));
+                    return value;
                 elseif type == 3 then
+                    return math.random(-math.abs(value), math.abs(value));
+                elseif type == 4 then
                     if globals.choked_commands == 0 then
                         cache[1] = not cache[1];
                     end;
 
                     return cache[1] and value or -value;
+                elseif type == 5 then
+                    cache[3] = (cache[3] or 0) + value;
+
+                    while cache[3] > 89 do
+                        cache[3] = cache[3] - 178;
+                    end;
+
+                    while cache[3] < -89 do
+                        cache[3] = cache[3] + 178;
+                    end;
+
+                    return cache[3];
                 end;
                 return 0;
             end;
@@ -828,6 +885,9 @@ local antiaim = {}; do
             ---@param type integer
             antiaim.defensive.calculate_yaw = function(settings, type)
                 if type == 1 then
+                    source.base_yaw:set(0);
+                    source.yaw_offset:set(settings.defensive_offset:get());
+                elseif type == 2 then
                     source.yaw_modifier:set(1);
                     source.yaw_modifier_offset:set(90);
                 elseif type == 2 then
@@ -860,7 +920,8 @@ local antiaim = {}; do
                     return;
                 end;
 
-                if not exploit:is_break_lagcomp() then
+                local tick_data = entity_manager.get(globals.tick_count, me); -- сука Я ЗАЕБАЛСЯ УЖЕ НАХУЙ
+                if tick_data.defensive_ticks < 1 then
                     return;
                 end;
 
@@ -875,6 +936,7 @@ local antiaim = {}; do
 
                 if modifier_type ~= 0 then
                     source.yaw_modifier:set(0);
+                    source.yaw_desync:set(0);
                     antiaim.defensive.calculate_yaw(settings, modifier_type);
                 end;
             end;

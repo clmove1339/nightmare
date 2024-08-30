@@ -1,10 +1,8 @@
+--- Я рот сейза долбил
+--- Где нахуй хоть один метод для работы с анимациями пидорас
 local memory = require 'libs.memory';
 
-local cache = {
-    -- [name] = 0 - example
-};
-
-local animation = {}; do
+local animation = { cache = {} }; do
     ---@private
     local native_GetTimescale = memory:get_vfunc('engine.dll', 'VEngineClient014', 91, 'float(__thiscall*)(void*)');
 
@@ -59,13 +57,13 @@ local animation = {}; do
         return solve(easing_fn, a, b, get_clock(), t);
     end;
 
-    -- На говнокодил шо сисечки писечки
-    ---@param name string
+    ---@param name any
     ---@param a? number
     ---@param b number|boolean
     ---@param t? number
     ---@return number
     function animation:new(name, a, b, t)
+        local cache = animation.cache;
         a = a or 0; t = t or .05;
 
         if not cache[name] then
@@ -76,7 +74,19 @@ local animation = {}; do
             return cache[name];
         end;
 
-        return 0;
+        return a;
+    end;
+
+    ---@param name any
+    ---@param value number
+    function animation:set(name, value)
+        if animation.cache[name] then
+            animation.cache[name] = value or 0;
+        end;
+    end;
+
+    function animation:delete(name)
+        animation.cache[name] = nil;
     end;
 end;
 
