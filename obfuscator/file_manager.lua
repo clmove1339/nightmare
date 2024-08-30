@@ -16,7 +16,7 @@ local files = {}; do
     end;
 
     ---@param path string
-    ---@return string
+    ---@return string?
     files.read = function(path)
         local handle = io.open(path, 'r');
         if not handle then
