@@ -135,6 +135,35 @@ return {
         },
         skin_names = { 'Snake Camo', 'Lightning Strike', 'Safari Mesh', 'Pink DDPAT', 'BOOM', 'Corticera', 'Graphite', 'Electric Hive', 'Pit Viper', 'Redline', 'Asiimov', 'Dragon Lore', "Man-o'-war", 'Worm God', 'Medusa', 'Sun in Leo', 'Hyper Beast', 'Elite Build', 'Phobos', 'Fever Dream', 'Oni Taiji', 'Mortis', 'PAW', 'The Prince', 'Gungnir', 'Acheron', 'Neo-Noir', 'Desert Hydra', 'Atheris', 'Containment Breach', 'Wildfire', 'Capillary', 'Exoskeleton', 'Fade', 'Silk Tiger', 'POP AWP', 'Chromatic Aberration', 'Duality', 'Black Nile' }
     },
+    weapon_bayonet = {
+        skin_ids = {
+            Autotronic = 573,
+            ['Black Laminate'] = 563,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 578,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 410,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 580,
+            ['Gamma Doppler'] = 572,
+            Lore = 558,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Autotronic', 'Bright Water', 'Freehand' }
+    },
     weapon_bizon = {
         skin_ids = {
             Anolis = 829,
@@ -517,6 +546,275 @@ return {
             Woodsman = 667
         },
         skin_names = { 'Granite Marbleized', 'Silver', 'Scorpion', 'Grassland', 'Grassland Leaves', 'Corticera', 'Ocean Foam', 'Amber Fade', 'Red FragCam', 'Chainmail', 'Pulse', 'Coach Class', 'Ivory', 'Fire Elemental', 'Pathfinder', 'Handgun', 'Imperial', 'Oceanic', 'Imperial Dragon', 'Turf', 'Woodsman', 'Urban Hazard', 'Obsidian', 'Acid Etched', 'Gnarled', 'Dispatch', 'Panther Camo', 'Space Race', 'Lifted Spirits', 'Wicked Sick' }
+    },
+    weapon_knife = {
+        skin_ids = {},
+        skin_names = {}
+    },
+    weapon_knife_butterfly = {
+        skin_ids = {
+            Autotronic = 1115,
+            ['Black Laminate'] = 1110,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 619,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 1105,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Bright Water', 'Freehand', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Autotronic' }
+    },
+    weapon_knife_falchion = {
+        skin_ids = {
+            Autotronic = 1116,
+            ['Black Laminate'] = 1111,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 1106,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 621,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Bright Water', 'Freehand', 'Ultraviolet', 'Lore', 'Black Laminate', 'Autotronic' }
+    },
+    weapon_knife_flip = {
+        skin_ids = {
+            Autotronic = 574,
+            ['Black Laminate'] = 564,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 578,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 410,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 580,
+            ['Gamma Doppler'] = 572,
+            Lore = 559,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Autotronic', 'Bright Water', 'Freehand' }
+    },
+    weapon_knife_gut = {
+        skin_ids = {
+            Autotronic = 575,
+            ['Black Laminate'] = 565,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 578,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 410,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 580,
+            ['Gamma Doppler'] = 572,
+            Lore = 560,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Autotronic', 'Bright Water', 'Freehand' }
+    },
+    weapon_knife_karambit = {
+        skin_ids = {
+            Autotronic = 576,
+            ['Black Laminate'] = 566,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 578,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 410,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 582,
+            ['Gamma Doppler'] = 572,
+            Lore = 561,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Autotronic', 'Bright Water', 'Freehand' }
+    },
+    weapon_knife_m9_bayonet = {
+        skin_ids = {
+            Autotronic = 577,
+            ['Black Laminate'] = 567,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 562,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Autotronic', 'Bright Water', 'Freehand' }
+    },
+    weapon_knife_push = {
+        skin_ids = {
+            Autotronic = 1118,
+            ['Black Laminate'] = 1113,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 619,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 1108,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Bright Water', 'Freehand', 'Doppler', 'Doppler', 'Doppler', 'Lore', 'Black Laminate', 'Autotronic' }
+    },
+    weapon_knife_survival_bowie = {
+        skin_ids = {
+            Autotronic = 1114,
+            ['Black Laminate'] = 1109,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 1104,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 98,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Ultraviolet', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Bright Water', 'Freehand', 'Lore', 'Black Laminate', 'Autotronic' }
+    },
+    weapon_knife_t = {
+        skin_ids = {},
+        skin_names = {}
+    },
+    weapon_knife_tactical = {
+        skin_ids = {
+            Autotronic = 1117,
+            ['Black Laminate'] = 1112,
+            ['Blue Steel'] = 42,
+            ['Boreal Forest'] = 77,
+            ['Bright Water'] = 579,
+            ['Case Hardened'] = 44,
+            ['Crimson Web'] = 12,
+            ['Damascus Steel'] = 411,
+            Doppler = 421,
+            Fade = 38,
+            ['Forest DDPAT'] = 5,
+            Freehand = 581,
+            ['Gamma Doppler'] = 572,
+            Lore = 1107,
+            ['Marble Fade'] = 413,
+            Night = 40,
+            ['Rust Coat'] = 414,
+            ['Safari Mesh'] = 72,
+            Scorched = 175,
+            Slaughter = 59,
+            Stained = 43,
+            ['Tiger Tooth'] = 409,
+            Ultraviolet = 620,
+            ['Urban Masked'] = 143
+        },
+        skin_names = { 'Forest DDPAT', 'Crimson Web', 'Fade', 'Night', 'Blue Steel', 'Stained', 'Case Hardened', 'Slaughter', 'Safari Mesh', 'Boreal Forest', 'Urban Masked', 'Scorched', 'Tiger Tooth', 'Damascus Steel', 'Marble Fade', 'Rust Coat', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Gamma Doppler', 'Bright Water', 'Freehand', 'Ultraviolet', 'Lore', 'Black Laminate', 'Autotronic' }
     },
     weapon_m249 = {
         skin_ids = {
@@ -1310,41 +1608,5 @@ return {
             ['Zombie Offensive'] = 1135
         },
         skin_names = { 'Blue Steel', 'Grassland', 'Blue Spruce', 'Urban Perforated', 'Blaze Orange', 'Fallout Warning', 'Jungle', 'VariCamo Blue', 'CaliCamo', 'Heaven Guard', 'Red Python', 'Red Leather', 'Bone Machine', 'Tranquility', 'Quicksilver', 'Scumbria', 'Teclu Burner', 'Black Tie', 'Slipstream', 'Seasons', 'Ziggy', 'Oxide Blaze', 'Banana Leaf', 'Frost Borre', 'Elegant Vines', 'Incinegator', 'Entombed', 'Charter', 'Ancient Lore', 'XOXO', 'Blue Tire', 'Watchdog', 'Zombie Offensive', 'Hieroglyph' }
-    },
-    weapon_knife = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_t = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_bayonet = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_flip = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_gut = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_karambit = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_m9_bayonet = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_tactical = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_falchion = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_survival_bowie = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_butterfly = {
-        skin_ids = {}, skin_names = {}
-    },
-    weapon_knife_push = {
-        skin_ids = {}, skin_names = {}
-    },
+    }
 };
