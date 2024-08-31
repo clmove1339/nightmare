@@ -367,3 +367,11 @@ function benchmark(fn, iterations, accuracy, ...)
 
     return avg / accuracy;
 end;
+
+function to_ticks(x)
+    return math.floor(.5 + x / globals.interval_per_tick);
+end;
+
+function to_time(x)
+    return x * globals.interval_per_tick;
+end;

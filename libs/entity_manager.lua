@@ -1,3 +1,4 @@
+local engine_client = require 'libs.engine_client';
 ---@protected
 ---@class tick_data
 ---@field abs vec3_t
@@ -42,7 +43,18 @@ local entity_manager = {
                 local last_defensive = prev_data and prev_data.defensive_ticks or 0;
 
                 local is_lagged = m_flOldSimulationTime == m_flSimulationTime;
-                local defensive_ticks = (m_flOldSimulationTime - m_flSimulationTime) / globals.interval_per_tick;
+                local defensive_ticks = m_flOldSimulationTime - m_flSimulationTime;
+
+                if index == my_index then
+                    local net_channel = engine_client:get_net_channel_info();
+                    if net_channel then
+                        local ping = net_channel:get_latency(0) + net_channel:get_latency(1);
+
+                        defensive_ticks = defensive_ticks - ping;
+                    end;
+                end;
+
+                defensive_ticks = to_ticks(defensive_ticks);
 
                 lag_time = is_lagged and lag_time + 1 or 0;
 
