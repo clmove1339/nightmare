@@ -971,12 +971,11 @@ local antiaim = {}; do
             ---@param type integer
             antiaim.defensive.calculate_yaw = function(settings, type)
                 if type == 1 then
-                    source.base_yaw:set(0);
                     source.yaw_offset:set(settings.defensive_offset:get());
                 elseif type == 2 then
                     source.yaw_modifier:set(1);
                     source.yaw_modifier_offset:set(90);
-                elseif type == 2 then
+                elseif type == 3 then
                     local spin_speed = settings.defensive_spin_speed:get();
                     if cache[2] > 180 then
                         cache[2] = -180;
@@ -984,7 +983,7 @@ local antiaim = {}; do
                     cache[2] = cache[2] + spin_speed;
                     source.base_yaw:set(0);
                     source.yaw_offset:set(cache[2]);
-                elseif type == 3 then
+                elseif type == 4 then
                     source.base_yaw:set(0);
                     source.yaw_offset:set(math.random(-180, 180));
                 end;
