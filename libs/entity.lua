@@ -26,6 +26,16 @@ function entity_t:get_velocity()
     );
 end;
 
+function entity_t:get_angles()
+    local m_angEyeAngles = ffi.cast('float*', self[netvars.m_angEyeAngles]);
+
+    return angle_t.new(
+        m_angEyeAngles[0],
+        m_angEyeAngles[1],
+        m_angEyeAngles[2]
+    );
+end;
+
 ---@return number
 function entity_t:get_flags()
     return ffi.cast('int*', self[netvars.m_fFlags])[0];

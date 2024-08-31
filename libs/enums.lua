@@ -30,6 +30,7 @@ netvars = {
     m_nGrenadeSpawnTime       = engine.get_netvar_offset('DT_BaseCSGrenadeProjectile', 'm_vecExplodeEffectOrigin') + 12,
     m_bDidSmokeEffect         = engine.get_netvar_offset('DT_SmokeGrenadeProjectile', 'm_bDidSmokeEffect'),
     m_nSmokeEffectTickBegin   = engine.get_netvar_offset('DT_SmokeGrenadeProjectile', 'm_nSmokeEffectTickBegin'),
+    m_angEyeAngles            = engine.get_netvar_offset('DT_CSPlayer', 'm_angEyeAngles'),
     m_vecViewOffset           = 0x108
 };
 

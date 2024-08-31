@@ -69,11 +69,15 @@ local aimbot = {}; do
         local hitchance = group:slider_int('Hit chance', 0, 100, 55);
         local min_damage = group:slider_int('Min damage', 1, 120, nixware['Ragebot']['Target']['Scout'].min_damage:get());
         local on_top = group:switch('Stop on top', false);
+        local threshold = group:slider_int('Top threshold', 3, 100, 15);
 
         auto_stop:connect({
             hitchance,
             min_damage,
-            on_top,
+            {
+                master = on_top,
+                threshold
+            }
         }, true);
 
         function aimbot.jump_scout:threat_hittable()
@@ -84,13 +88,12 @@ local aimbot = {}; do
             end;
 
             local my_origin = me:get_origin();
-
             local entities = entitylist.get_entities('CCSPlayer', false);
 
             for i = 1, #entities do
                 local player = entities[i];
                 if player and player:is_alive() then
-                    local can_hit = ffi.cast('int*', player[netvars.m_bGunGameImmunity])[0] == 0;
+                    local can_hit = ffi.cast('int*', player[netvars.m_bGunGameImmunity])[0] == 256; -- это bool значение какие 256
 
                     if not player:is_spectator() and player:is_enemy() and player:is_visible(me) and can_hit then
                         local distance = my_origin:dist(player:get_origin());
@@ -151,7 +154,7 @@ local aimbot = {}; do
             local active = enable:get() and self:threat_hittable() and me:can_fire() and in_air;
 
             if input:is_key_pressed(0x20) then
-                if not on_top:get() or math.abs(velocity.z) > 10 or velocity.z == 0 then
+                if not on_top:get() or math.abs(velocity.z) > threshold:get() or velocity.z == 0 then
                     active = false;
                 end;
             end;
@@ -181,6 +184,9 @@ local aimbot = {}; do
         state = 'Chilling',
         postfix = '',
         time = 0,
+        yaw_history = {},
+        yaw_packets = {},
+        states = { 'stand', 'run', 'crouch', 'sneak', 'in air', 'in air & crouch' }
     }; do
         local enable = handle:switch('Enable aimbot indicator', false);
 
@@ -201,6 +207,75 @@ local aimbot = {}; do
             color_t.new(0.4, 0.4, 1, 0.6),
             color_t.new(1, 1, 0.4, 0.6)
         };
+
+        ---@param player entity_t
+        ---@return string?
+        function aimbot.indicator:get_state(player)
+            if not (player and player:is_alive()) then
+                return;
+            end;
+
+            local states = aimbot.indicator.states;
+
+            local velocity = player:get_velocity();
+            local flags = player:get_flags();
+            local duck_amount = ffi.cast('int*', player[netvars.m_flDuckAmount])[0];
+
+            local in_crouch = duck_amount > 0;
+            local in_air = bit.hasnt(flags, FL.ONGROUND);
+            local is_moving = velocity:length2d() > 2;
+
+            if in_air then
+                return states[in_crouch and 6 or 5];
+            end;
+
+            if in_crouch then
+                return states[is_moving and 4 or 3];
+            end;
+
+            if is_moving then
+                return states[2];
+            end;
+
+            return states[1];
+        end;
+
+        function aimbot.indicator:record()
+            local players = entitylist.get_players(true, true, true);
+            local yaw_history = self.yaw_history;
+
+            for _, player in ipairs(players) do
+                local state = self:get_state(player);
+                local index = player:get_index();
+
+                if not self.yaw_packets[index] then
+                    self.yaw_packets[index] = {};
+                end;
+
+                if state then
+                    if not yaw_history[index] then
+                        yaw_history[index] = { last_state = state };
+                    end;
+
+                    local record_interrupted = yaw_history[index].last_state ~= state;
+                    yaw_history[index].last_state = state;
+
+                    if not yaw_history[index][state] or record_interrupted then
+                        yaw_history[index][state] = {}; -- Удаляем информацию если она не была записана разом
+                    end;
+
+                    local yaw = player:get_angles().yaw;
+                    table.insert(yaw_history[index][state], yaw);                   -- Добавлям информацию
+
+                    if #yaw_history[index][state] == 64 then                        -- Если записали секунду
+                        self.yaw_packets[index][state] = yaw_history[index][state]; -- Упаковываем
+                        yaw_history[index][state] = {};                             -- Очищаем
+                    end;
+                else
+                    self[index] = nil; -- Если не получили стейт, тогда очищаем всю информацию
+                end;
+            end;
+        end;
 
         function aimbot.indicator:get_best_target()
             local me = entitylist.get_local_player();
@@ -247,24 +322,36 @@ local aimbot = {}; do
             local dt = globals.frame_time;
             local is_visible = best and best.is_visible;
 
-            aimbot.indicator.time = aimbot.indicator.time + dt;
-            aimbot.indicator.postfix = '';
-            aimbot.indicator.state = 'Chilling';
+            self.time = self.time + dt;
+            self.postfix = '';
+            self.state = 'Chilling';
 
             if best and not is_visible then
-                aimbot.indicator.state = 'Analyzing';
-                aimbot.indicator.postfix = string.rep('.', math.floor(aimbot.indicator.time * 2 % 4));
-                goto escape;
+                local entity = best.entity; ---@type entity_t
+                local index = entity:get_index();
+                local state = self:get_state(entity);
+                local packets = self.yaw_packets[index];
+                local packet = packets and packets[state];
+
+                self.postfix = string.rep('.', math.floor(self.time * 4 % 4));
+
+                if not packet then
+                    self.state = 'Collecting data';
+                    goto escape;
+                else
+                    self.state = 'Analyzing yaw';
+                    goto escape;
+                end;
             end;
 
             if is_visible then
-                aimbot.indicator.state = 'Peeking';
+                self.state = 'Peeking';
                 goto escape;
             end;
 
-            aimbot.indicator.time = 0;
+            self.time = 0;
             ::escape::
-            return aimbot.indicator.state;
+            return self.state;
         end;
 
         ---@param data tick_data
@@ -311,14 +398,22 @@ local aimbot = {}; do
             end;
 
             local me = entitylist.get_local_player();
-            if not (me and me:is_alive()) then
+            if not me then
+                self.yaw_packets = {};
+                self.yaw_history = {};
                 return;
             end;
 
-            aimbot.indicator:animate();
+            self:record();
 
-            local best = aimbot.indicator:get_best_target();
-            local state = aimbot.indicator:update_state(best);
+            if not me:is_alive() then
+                return;
+            end;
+
+            self:animate();
+
+            local best = self:get_best_target();
+            local state = self:update_state(best);
 
             local text = {
                 'State: ' .. state .. aimbot.indicator.postfix,
@@ -368,15 +463,6 @@ local aimbot = {}; do
                     colors.bottom_left:alpha_modulatef(weight)
                 );
             end;
-
-            -- Подумоем
-            -- render.rect_filled_fade(
-            --     min, max,
-            --     color_t.new(0, 0, 0, colors.upper_left.a),
-            --     color_t.new(0, 0, 0, colors.upper_right.a),
-            --     color_t.new(0, 0, 0, colors.bottom_right.a),
-            --     color_t.new(0, 0, 0, colors.bottom_left.a)
-            -- );
 
             render.push_clip_rect(min, max);
             render.rect_filled(min, max, colors.background, 5);
@@ -725,7 +811,7 @@ local antiaim = {}; do
                 {
                     master = info.defensive_yaw,
                     [2] = info.defensive_offset,
-                    [3] = info.defensive_spin_speed
+                    [4] = info.defensive_spin_speed
                 }
             }, index);
 
