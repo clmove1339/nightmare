@@ -4,7 +4,6 @@ math.randomseed(os.time());
 --#endregion
 
 --#region: package.path
-
 do
     local get_csgo_folder = function()
         local source = debug.getinfo(1, 'S').source:sub(2, -1);
@@ -15,11 +14,9 @@ do
     package.path = package.path .. string.format('%slua\\nightmare\\?.lua;', csgo_folder);
     package.path = package.path .. string.format('%slua\\nightmare\\?\\init.lua;', csgo_folder);
 end;
-
 --#endregion
 
 --#region: Libraries
-
 require 'libs.enums';
 require 'libs.global';
 require 'libs.interfaces';
@@ -53,7 +50,6 @@ local font = {
         [18] = render.setup_font('c:/windows/fonts/seguisb.ttf', 18, 32)
     }
 };
-
 --#endregion
 
 --#region: Main
@@ -186,9 +182,11 @@ local aimbot = {}; do
         time = 0,
         yaw_history = {},
         yaw_packets = {},
-        states = { 'stand', 'run', 'crouch', 'sneak', 'in air', 'in air & crouch' }
+        states = { 'stand', 'run', 'crouch', 'sneak', 'in air', 'in air & crouch' },
+
     }; do
-        local enable = handle:switch('Enable aimbot indicator', false);
+        local class, enable = handle:switch('Enable aimbot indicator', false, true);
+        local analyzer = class:combo('Analyzer type', { 'Average', 'Clustering', 'AI' });
 
         local old_text = {};
         local previous_phase = 1;
@@ -250,6 +248,9 @@ local aimbot = {}; do
 
                 if not self.yaw_packets[index] then
                     self.yaw_packets[index] = {};
+                    for _, state in pairs(aimbot.indicator.states) do
+                        self.yaw_packets[index][state] = {};
+                    end;
                 end;
 
                 if state then
@@ -260,21 +261,132 @@ local aimbot = {}; do
                     local record_interrupted = yaw_history[index].last_state ~= state;
                     yaw_history[index].last_state = state;
 
-                    if not yaw_history[index][state] or record_interrupted then
-                        yaw_history[index][state] = {}; -- Удаляем информацию если она не была записана разом
+                    if not yaw_history[index][state] or record_interrupted then -- Если запись прервалась, то очищаем ее
+                        yaw_history[index][state] = {};
                     end;
+
+                    local current_size = #yaw_history[index][state];
+                    local max_size = #self.yaw_packets[index][state];
 
                     local yaw = player:get_angles().yaw;
                     table.insert(yaw_history[index][state], yaw);                   -- Добавлям информацию
 
-                    if #yaw_history[index][state] == 64 then                        -- Если записали секунду
-                        self.yaw_packets[index][state] = yaw_history[index][state]; -- Упаковываем
-                        yaw_history[index][state] = {};                             -- Очищаем
+                    if current_size >= max_size then                                -- Проверяем то что текущая запись больше чем существующий пакет
+                        self.yaw_packets[index][state] = yaw_history[index][state]; -- Перезаписываем его
+                    end;
+
+                    if max_size > 64 then
+                        -- чурки чурки чурки
                     end;
                 else
-                    self[index] = nil; -- Если не получили стейт, тогда очищаем всю информацию
+                    self[index] = nil; -- Если не получили стейт, то значит игрок не валиден и тогда очищаем всю информацию
                 end;
             end;
+        end;
+
+        ---@param packet number[]?
+        ---@return number?
+        function aimbot.indicator:analyze(packet)
+            if not (packet and #packet > 16) then
+                return nil;
+            end;
+
+            local type = analyzer:get();
+
+            if type == 0 then -- Average Jitter
+                local best_jitter = 0;
+
+                for delay = 1, 4 do
+                    local jitter_sum = 0;
+                    local jitter_count = 0;
+
+                    for i = delay + 1, #packet do
+                        local diff = math.abs(packet[i] - packet[i - delay]);
+                        jitter_sum = jitter_sum + diff;
+                        jitter_count = jitter_count + 1;
+                    end;
+
+                    local avg_jitter = jitter_count > 0 and (jitter_sum / jitter_count) or 0;
+                    if avg_jitter > best_jitter then
+                        best_jitter = avg_jitter;
+                    end;
+                end;
+
+                return best_jitter;
+            elseif type == 1 then -- Clustering Jitter
+                local clusters = {};
+                local cluster_threshold = 15;
+                local best_jitter = 0;
+
+                for i = 1, #packet do
+                    local value = packet[i];
+                    local found_cluster = false;
+
+                    for _, cluster in pairs(clusters) do
+                        if math.abs(cluster.mean - value) < cluster_threshold then
+                            cluster.sum = cluster.sum + value;
+                            cluster.count = cluster.count + 1;
+                            cluster.mean = cluster.sum / cluster.count;
+                            found_cluster = true;
+                            break;
+                        end;
+                    end;
+
+                    if not found_cluster then
+                        table.insert(clusters, { mean = value, sum = value, count = 1 });
+                    end;
+                end;
+
+                for delay = 1, 4 do
+                    local jitter_sum = 0;
+                    local jitter_count = 0;
+
+                    for i = delay + 1, #packet do
+                        local diff = math.abs(packet[i] - packet[i - delay]);
+                        jitter_sum = jitter_sum + diff;
+                        jitter_count = jitter_count + 1;
+                    end;
+
+                    local avg_jitter = jitter_count > 0 and (jitter_sum / jitter_count) or 0;
+                    if avg_jitter > best_jitter then
+                        best_jitter = avg_jitter;
+                    end;
+                end;
+
+                local max_cluster = nil;
+                for _, cluster in pairs(clusters) do
+                    if max_cluster == nil or cluster.count > max_cluster.count then
+                        max_cluster = cluster;
+                    end;
+                end;
+
+                return best_jitter > 0 and best_jitter or max_cluster.mean;
+            end;
+
+            return nil;
+        end;
+
+        ---@param entity entity_t?
+        ---@param state string?
+        ---@return number[]?
+        function aimbot.indicator:get_packet(entity, state)
+            if not entity then
+                return;
+            end;
+
+            local index = entity:get_index();
+            local packets = self.yaw_packets[index];
+
+            if not packets then
+                return;
+            end;
+
+            local packet = packets[state];
+            if not (packet and #packet >= 16) then
+                return;
+            end;
+
+            return packet;
         end;
 
         function aimbot.indicator:get_best_target()
@@ -328,10 +440,9 @@ local aimbot = {}; do
 
             if best and not is_visible then
                 local entity = best.entity; ---@type entity_t
-                local index = entity:get_index();
                 local state = self:get_state(entity);
-                local packets = self.yaw_packets[index];
-                local packet = packets and packets[state];
+                local packet = self:get_packet(entity, state);
+                local analysis = self:analyze(packet);
 
                 self.postfix = string.rep('.', math.floor(self.time * 4 % 4));
 
@@ -340,6 +451,11 @@ local aimbot = {}; do
                     goto escape;
                 else
                     self.state = 'Analyzing yaw';
+
+                    if analysis then
+                        self.state = string.format('Average: %.2f', analysis);
+                        self.postfix = '';
+                    end;
                     goto escape;
                 end;
             end;
@@ -416,7 +532,7 @@ local aimbot = {}; do
             local state = self:update_state(best);
 
             local text = {
-                'State: ' .. state .. aimbot.indicator.postfix,
+                'State: ' .. state .. self.postfix,
             };
 
             if best then
@@ -434,7 +550,7 @@ local aimbot = {}; do
                 local data = tick_packet and tick_packet[index];
 
                 if data then
-                    local lag_comp = aimbot.indicator:lagcomp(data);
+                    local lag_comp = self:lagcomp(data);
                     table.insert(text, string.format('LC: %s', lag_comp));
                 end;
             end;
@@ -1916,8 +2032,6 @@ local skinchanger = {}; do
         end, print);
     end);
 end;
-
-
 --#endregion
 
 --#region: Post load
