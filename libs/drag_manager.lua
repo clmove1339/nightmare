@@ -1,11 +1,12 @@
 --[[
     1. Добавить игнор лист
-    2. Добавить получение позиции курсора с никсвара
+    2. Done
     3. Добавить лерп векторов
     4. Добавить каллбек на объект ( выполнение определенного кода если какой-то объект был драгнут / Находится в этом состоянии )
 ]]
 
 local input = require 'libs.input';
+local utils = require 'libs.utils';
 
 ---@class DragObject
 ---@field id string
@@ -145,7 +146,7 @@ local drag_manager = {
     ---@param object DragObject
     ---@return boolean
     drag_manager.is_cursor_in_bounds = function(object)
-        local cursor_position = utils.get_mouse_position();
+        local cursor_position = utils:get_mouse_position();
         local origin = object.origin;
         local size = object.size;
 
@@ -170,7 +171,7 @@ local drag_manager = {
     end;
 
     drag_manager.main = function()
-        local cursor_position = utils.get_mouse_position();
+        local cursor_position = utils:get_mouse_position();
         drag_manager.update_mouse_hold_duration();
 
         if drag_manager.is_mouse_button_pressed() then
@@ -260,7 +261,7 @@ local drag_manager = {
             return false;
         end;
 
-        local cursor_position = utils.get_mouse_position();
+        local cursor_position = utils:get_mouse_position();
         local lambda = { size = size, origin = origin };
 
         ---@diagnostic disable: missing-fields
