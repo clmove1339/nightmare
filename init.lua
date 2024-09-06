@@ -89,7 +89,7 @@ local aimbot = {}; do
             for i = 1, #entities do
                 local player = entities[i];
                 if player and player:is_alive() then
-                    local can_hit = ffi.cast('int*', player[netvars.m_bGunGameImmunity])[0] == 256; -- это bool значение какие 256
+                    local can_hit = not ffi.cast('bool*', player[netvars.m_bGunGameImmunity])[0];
 
                     if not player:is_spectator() and player:is_enemy() and player:is_visible(me) and can_hit then
                         local distance = my_origin:dist(player:get_origin());
