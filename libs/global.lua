@@ -375,3 +375,11 @@ end;
 function to_time(x)
     return x * globals.interval_per_tick;
 end;
+
+---@diagnostic disable-next-line: duplicate-set-field
+table.move = function(list, from, to)
+    local value = list[from];
+
+    table.remove(list, from);
+    table.insert(list, to, value);
+end;
