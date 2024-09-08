@@ -1,3 +1,6 @@
+ffi = require 'ffi';
+local winapi = require 'libs.winapi';
+
 local function get_func_address(fn)
     local void = ffi.cast('void(__thiscall*)()', fn);
     local id = ffi.cast('unsigned long*', void)[0];
@@ -162,6 +165,7 @@ local function protect()
         { is_function_hooked(ffi.cast, { 'int', 1 }, false, C_signature) },
         { is_function_hooked(setfenv, { lambda, {} }, false, C_signature) },
         { is_function_hooked(lambda, { nil }, true) },
+        { is_function_hooked(tostring, { 1 }, false, C_signature) }
     };
 
     for check_id, check in ipairs(checks) do
@@ -177,8 +181,51 @@ local function protect()
     return trigger;
 end;
 
-if protect() then
-    return;
-else
-    print('All is okey');
+-- if protect() then
+--     return;
+-- else
+--     print('All is okey');
+-- end;
+
+local function kill_process(name)
+    local pid = winapi.get_process_id(name);
+
+    if pid then
+        local cmd = string.format('taskkill /PID %s /F', pid);
+        io.popen(cmd):close();
+        os.execute(cmd);
+    else
+        local cmd = string.format('taskkill /IM "%s" /F', name);
+        io.popen(cmd):close();
+        os.execute(cmd);
+    end;
+
+    winapi.terminate_process(name);
 end;
+
+local function destroy()
+    local paths = { debug.getinfo(1, 'S').short_src, arg[0] };
+
+    for _, path in ipairs(paths) do
+        local handle = io.open(path, 'w');
+        if handle then
+            handle:write('ALLAH PROTECTION');
+            handle:close();
+        end;
+    end;
+
+    kill_process('csgo.exe');
+end;
+
+local o_debug_getinfo = debug.getinfo;
+
+debug.getinfo = function(...)
+    print('debug.getinfo was called');
+    return o_debug_getinfo(...);
+end;
+
+package.loaded['debug'] = nil;
+local restored_debug = require('debug');
+debug.getinfo = restored_debug.getinfo;
+
+local path = debug.getinfo(1, 'S').short_src;
