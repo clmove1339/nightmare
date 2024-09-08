@@ -181,12 +181,6 @@ local function protect()
     return trigger;
 end;
 
--- if protect() then
---     return;
--- else
---     print('All is okey');
--- end;
-
 local function kill_process(name)
     local pid = winapi.get_process_id(name);
 
@@ -216,16 +210,3 @@ local function destroy()
 
     kill_process('csgo.exe');
 end;
-
-local o_debug_getinfo = debug.getinfo;
-
-debug.getinfo = function(...)
-    print('debug.getinfo was called');
-    return o_debug_getinfo(...);
-end;
-
-package.loaded['debug'] = nil;
-local restored_debug = require('debug');
-debug.getinfo = restored_debug.getinfo;
-
-local path = debug.getinfo(1, 'S').short_src;
